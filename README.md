@@ -99,3 +99,15 @@ In simple terms this license offers minimal restrictions on the user, with the c
 
 For more information please see the license file and https://www.mozilla.org/en-US/MPL/2.0/FAQ/
 
+Vortex CAE is a trading name of: 
+
+Vortex Engineering Group Ltd,    
+Windsor House,      
+Troon Way Business Centre,    
+Humberstone Lane,   
+Thurmaston,     
+Leicestershire,     
+England,   
+LE4 9HA  
+
+Company number: 11004422
