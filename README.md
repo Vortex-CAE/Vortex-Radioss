@@ -90,7 +90,8 @@ https://www.linkedin.com/in/david-russell-4b110717a/
 
 Vortex CAE is a trading name of Vortex Engineering Group Ltd
 
-Windsor House Troon Way Business Centre, 
+Windsor House,     
+Troon Way Business Centre, 
 Humberstone Lane,  
 Thurmaston,   
 Leicestershire,   
@@ -105,5 +106,5 @@ LICENSING
 We chose to open-source license this code-base under Mozilla Public License, version 2.0.
 In simple terms this license offers minimal restrictions on the user, with the condition that if the user modifies, improves or bug-fixes the code, then those changes should be published so that the whole community can benefit from the change.
 
-For more information: https://www.mozilla.org/en-US/MPL/2.0/FAQ/
+For more information please see the license file and https://www.mozilla.org/en-US/MPL/2.0/FAQ/
 
