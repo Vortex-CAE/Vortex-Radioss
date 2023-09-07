@@ -22,7 +22,7 @@ Modules
 This module will read in the animation data from one Radioss Animation file (One timestep), as the raw arrays are compressed and difficult to use, we reccommend using the unpacked arrays as described below. 
 
     # Load the module
-    from vortex-radioss.radioss.RadiossReader import RadiossReader
+    from vortex_radioss.radioss.RadiossReader import RadiossReader
     
     # Generate animation object
     rr = RadiossReader("fileA001")
@@ -51,7 +51,7 @@ This module will read in the animation data from one Radioss Animation file (One
 ### Radioss Time-History Reader    
 This module will read in the data from one Radioss Time-History file (Multiple timesteps).
     # Load the module
-    from vortex-radioss.radioss.RadiossTHReader import RadiossTHReader
+    from vortex_radioss.radioss.RadiossTHReader import RadiossTHReader
     
     # Generate Time-History object
     th = RadiossReader("fileT01")
@@ -74,7 +74,7 @@ This module will read in the data from one Radioss Time-History file (Multiple t
 This module will convert Radioss Animation Files to LS-Dyna's D3plot format. The Radioss Time-History files will also be required as they contain data required by D3plot that is not present in the Animation files. This conversion is not comprehensive and is limited to only some common scalar and tensor arrays.
 
        # Load the module
-      from vortex-radioss.radioss.Anim_to_D3plot import A_2_D
+      from vortex_radioss.radioss.Anim_to_D3plot import A_2_D
       
       # Use the file stem e.g for "folder/fileA001", "folder/fileA002" would be:
       A_2_D("folder/file")
