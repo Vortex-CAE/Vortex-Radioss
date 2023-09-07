@@ -101,6 +101,9 @@ In simple terms this license offers minimal restrictions on the user, with the c
 
 For more information please see the license file and https://www.mozilla.org/en-US/MPL/2.0/FAQ/
 
+WHO WE ARE
+------------
+
 Vortex CAE is a trading name of: 
 
 Vortex Engineering Group Ltd,    
