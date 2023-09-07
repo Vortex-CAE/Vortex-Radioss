@@ -88,8 +88,9 @@ To get in touch please feel free to contact us on LinkedIn
 https://www.linkedin.com/company/vortex-cae     
 https://www.linkedin.com/in/david-russell-4b110717a/
 
-Vortex CAE is a trading name of Vortex Engineering Group Ltd
+Vortex CAE is a trading name of: 
 
+Vortex Engineering Group Ltd,    
 Windsor House,      
 Troon Way Business Centre,    
 Humberstone Lane,   
