@@ -1,12 +1,14 @@
 ![Vortex-Radioss](https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/vortex-logo.png)  
 Vortex-Radioss
 ======================
+<img align="right" src="https://github.com/Vortex-CAE/Vortex-Radioss/assets/144378169/e97457cb-2355-4eca-8849-fd4b81b21f4b" alt="My Image">
 
 This library is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
 
 
 Prerequisites
 ------------
+
 
 This library is an extention to the open-source lasso-python library which needs installing as a prerequisite.
 
