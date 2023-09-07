@@ -85,9 +85,9 @@ CONTACT
 ------------
 To get in touch please feel free to contact us on LinkedIn
 
-Company:
+Company:   
 https://www.linkedin.com/company/vortex-cae     
-Author:
+Author:    
 https://www.linkedin.com/in/david-russell-4b110717a/
 
 Vortex CAE is a trading name of: 
