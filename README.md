@@ -90,19 +90,6 @@ Company:
 https://www.linkedin.com/company/vortex-cae     
 Author:    
 https://www.linkedin.com/in/david-russell-4b110717a/
-
-Vortex CAE is a trading name of: 
-
-Vortex Engineering Group Ltd,    
-Windsor House,      
-Troon Way Business Centre,    
-Humberstone Lane,   
-Thurmaston,     
-Leicestershire,     
-England,   
-LE4 9HA  
-
-Company number: 11004422
       
 LICENSING
 ------------
