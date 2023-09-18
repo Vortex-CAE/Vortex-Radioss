@@ -40,6 +40,8 @@ class readAndConvert:
         self._d3plot = D3plot()
         self.A_2_D(filepath)
 
+
+
     def sequential(input_array):
         "Radioss puts a load of zeros at the end, increase by 1 to keep Primer happy for sequential node numbering"    
   
@@ -88,7 +90,11 @@ class readAndConvert:
             else:
                 break
         
-        
+        shell_output = {}
+        shell_output["element_shell_thickness"] = "element_shell_thickness"
+        shell_output["element_shell_specific_energy"] = "element_shell_internal_energy"
+
+
         node_acceleration               = []
         node_velocity                   = []
         node_displacement               = []
@@ -98,6 +104,7 @@ class readAndConvert:
         
         element_shell_thickness         = []
         element_shell_specific_energy   = []
+        element_shell_plastic_strain    = []
         element_shell_stress            = []
         element_shell_is_alive          = []
         
@@ -106,6 +113,7 @@ class readAndConvert:
         part_names                      = []
         
         timesteps                       = []
+
         
         #rr_th = RadiossTHReader(file_stem + "T01")    
         
@@ -138,11 +146,45 @@ class readAndConvert:
             
             "shell updates"
             
+            #test
+
+            element_shell_output = [] 
+            if "nbEFunc" in rr.raw_header:        
+                for iefun in range(0, rr.raw_header["nbEFunc"]):
+                    element_shell_output.append( "element_shell_" + str(rr.raw_arrays["fTextA"][iefun + rr.raw_header["nbFunc"]]).lower().replace(" ", "_").strip())
+
+            if "element_shell_thickness" in element_shell_output:
+                element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["element_shell_thickness"], shell_ids_tracker))
+
+            if "element_shell_specific_energy" in element_shell_output:
+                element_shell_specific_energy.append(readAndConvert.apply_sorter(rr.arrays["element_shell_specific_energy"], shell_ids_tracker))
+
+            if "element_shell_plastic_strain" in element_shell_output:
+                element_shell_plastic_strain.append(readAndConvert.apply_sorter(rr.arrays["element_shell_plastic_strain"], shell_ids_tracker))
+
+
+
+            #for radiossKey, dynaKey  in shell_output.items():
+            #    print(radiossKey , dynaKey)
+            #    globals()[dynaKey] = []
+
+
+            #    if radiossKey in element_shell_output:
+            #        dynaKey.append(readAndConvert.apply_sorter(rr.arrays[radiossKey], shell_ids_tracker))
+
+
+
+
+
+
+
+            #test
+
             if "nbFacets" in rr.arrays:
                 _element_shell_stress = np.zeros(shape=(rr.raw_header["nbFacets"], 2, 6))
             
-                if "element_shell_thickness" in rr.arrays:
-                    element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["element_shell_thickness"], shell_ids_tracker))
+                #if "Thickness" in rr.arrays:
+                #    element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["Thickness"], shell_ids_tracker))
                     
                 if "Stress (upper)" in rr.arrays:
                     _element_shell_stress[:, 0, 0] = rr.arrays["Stress (upper)"][:, 0]
@@ -213,19 +255,19 @@ class readAndConvert:
                     #    part_mass.append(0)
                     part_mass.append(0)
                         
-                if "element_shell_thickness" in rr.arrays:        
-                    part_shell_volume_tmp=[[] for item in range(0,len(rr.raw_arrays["pTextA"]))]
-                    
-                    for i in range (0, rr.raw_header["nbFacets"]):
-                        part_shell_volume_tmp[rr.arrays["element_shell_part_indexes"][i]].append(element_shell_area[i] * rr.arrays["element_shell_thickness"][i])
-                    part_volume=[sum(item) for item in part_shell_volume_tmp]                
-                    
-                    part_density = [a/b if b!= 0 else 0 for a,b in zip(part_mass, part_volume)]
+                #if "element_shell_thickness" in rr.arrays:        
+                #    part_shell_volume_tmp=[[] for item in range(0,len(rr.raw_arrays["pTextA"]))]
+                #    
+                #    for i in range (0, rr.raw_header["nbFacets"]):
+                #        part_shell_volume_tmp[rr.arrays["element_shell_part_indexes"][i]].append(element_shell_area[i] * rr.arrays["element_shell_thickness"][i])
+                #    part_volume=[sum(item) for item in part_shell_volume_tmp]                
+                #    
+                #    part_density = [a/b if b!= 0 else 0 for a,b in zip(part_mass, part_volume)]
                 
-            if "element_shell_thickness" in rr.arrays:
-                element_shell_specific_energy.append(readAndConvert.apply_sorter([rr.arrays["element_shell_specific_energy"][i_shell]/part_density[rr.arrays["element_shell_part_indexes"][i_shell]] \
-                                                      if part_density[rr.arrays["element_shell_part_indexes"][i_shell]] != 0 else 0 \
-                                                          for i_shell in range(0, rr.raw_header["nbFacets"])], shell_ids_tracker))
+            #if "element_shell_thickness" in rr.arrays:
+            #    element_shell_specific_energy.append(readAndConvert.apply_sorter([rr.arrays["element_shell_specific_energy"][i_shell]/part_density[rr.arrays["element_shell_part_indexes"][i_shell]] \
+            #                                          if part_density[rr.arrays["element_shell_part_indexes"][i_shell]] != 0 else 0 \
+            #                                              for i_shell in range(0, rr.raw_header["nbFacets"])], shell_ids_tracker))
                         
 
             "Timestep Updates"
@@ -252,13 +294,18 @@ class readAndConvert:
         v=np.array(rr.raw_arrays["pTextA"])
         
         shell_part_ids                                          =  np.array(rr.raw_arrays["pTextA"]).astype("U9").astype(int)
+        shell_part_titles                                       =  np.array(rr.raw_arrays["pTextA"]) 
         
         shell_num = rr.raw_header["nbFacets"]
         shell_part_num = len(shell_part_ids)
         
         if element_shell_thickness != []:
             self._d3plot.arrays[ArrayType.element_shell_thickness]        = np.array(element_shell_thickness)
+
+        if element_shell_specific_energy != []:
             self._d3plot.arrays[ArrayType.element_shell_internal_energy]  = np.array(element_shell_specific_energy)
+
+        
         
         self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain] = np.zeros(shape=(states, rr.raw_header["nbFacets"], 2))
         
@@ -298,10 +345,13 @@ class readAndConvert:
             beam_part_ids                                       =   np.concatenate([np.array(rr.raw_arrays["pText1DA"])\
                                                                                     .astype("U9").astype(int),\
                                                                                     np.array([1000000000])])
+            beam_part_titles                                   =  np.concatenate([np.array(rr.raw_arrays["pText1DA"]),
+                                                                                    np.array([1000000000])])
             beam_part_num                                       =   len(beam_part_ids)
         
         else:
             beam_part_ids                                       =   []
+            beam_part_titles                                    =   []
             beam_part_num                                       =   0
       
         "Solids"
@@ -319,9 +369,12 @@ class readAndConvert:
             #self._d3plot.arrays[ArrayType.element_solid_stress] = np.zeros(shape=(states, rr.raw_header["nbElts3D"], 9))
         
             solid_part_ids                                      =  np.array(rr.raw_arrays["pText3DA"]).astype("U9").astype(int)
+            solid_part_titles                                    =  np.array(rr.raw_arrays["pText3DA"])
         
         else:
             solid_part_ids                                      =   []
+            solid_part_titles                                   =   []
+
 
         "Global"
         #self._d3plot.arrays[ArrayType.global_internal_energy] = np.array([0] * states)
@@ -341,8 +394,8 @@ class readAndConvert:
         
         #self._d3plot.arrays[ArrayType.part_kinetic_energy] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
        
-        #self._d3plot.arrays[ArrayType.part_titles] = np.array(np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])).astype('S')
-        #self._d3plot.arrays[ArrayType.part_titles_ids] = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
+        self._d3plot.arrays[ArrayType.part_titles] = np.array(np.concatenate([shell_part_titles, beam_part_titles, solid_part_titles])).astype('S')
+        self._d3plot.arrays[ArrayType.part_titles_ids] = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
         #self._d3plot.arrays[ArrayType.part_velocity] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
         #self._d3plot.arrays[ArrayType.rigid_wall_force] = d3.arrays["rigid_wall_force"]
         
