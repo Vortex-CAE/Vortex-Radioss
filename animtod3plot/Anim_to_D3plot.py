@@ -116,7 +116,8 @@ class readAndConvert:
             rr = RadiossReader(file) 
             
             if states == 1:
-                shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
+                if rr.raw_header["nbFacets"] > 0:
+                    shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
                 
                 original_node_coordinates = rr.arrays["node_coordinates"]
         
@@ -136,12 +137,13 @@ class readAndConvert:
                 element_beam_is_alive.append((rr.arrays["element_beam_is_alive"]).astype("<f"))
             
             "shell updates"
-            if "element_shell_thickness" in rr.arrays:
-                element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["element_shell_thickness"], shell_ids_tracker))
             
             if "nbFacets" in rr.arrays:
                 _element_shell_stress = np.zeros(shape=(rr.raw_header["nbFacets"], 2, 6))
             
+                if "element_shell_thickness" in rr.arrays:
+                    element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["element_shell_thickness"], shell_ids_tracker))
+                    
                 if "Stress (upper)" in rr.arrays:
                     _element_shell_stress[:, 0, 0] = rr.arrays["Stress (upper)"][:, 0]
                     _element_shell_stress[:, 0, 1] = rr.arrays["Stress (upper)"][:, 1]
@@ -161,7 +163,7 @@ class readAndConvert:
                 if "Stress (upper)" in rr.arrays or "Stress (lower)" in rr.arrays :   
                     element_shell_stress.append(readAndConvert.apply_sorter(_element_shell_stress, shell_ids_tracker))
         
-            if "element_shell_is_alive" in rr.arrays:
+            if rr.raw_header["nbFacets"] > 0 and "element_shell_is_alive" in rr.arrays:
                 element_shell_is_alive.append(readAndConvert.apply_sorter(rr.arrays["element_shell_is_alive"], shell_ids_tracker).astype("<f"))
             
             "Calculate element shell areas"
@@ -242,9 +244,10 @@ class readAndConvert:
         
         "Shells"    
         
-        self._d3plot.arrays[ArrayType.element_shell_ids]              = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
-        self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker)
-        self._d3plot.arrays[ArrayType.element_shell_part_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
+        if rr.raw_header["nbFacets"] > 0:
+            self._d3plot.arrays[ArrayType.element_shell_ids]              = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
+            self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker)
+            self._d3plot.arrays[ArrayType.element_shell_part_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
 
         v=np.array(rr.raw_arrays["pTextA"])
         
@@ -259,7 +262,8 @@ class readAndConvert:
         
         self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain] = np.zeros(shape=(states, rr.raw_header["nbFacets"], 2))
         
-        self._d3plot.arrays[ArrayType.element_shell_is_alive]         = np.array(element_shell_is_alive)
+        if rr.raw_header["nbFacets"] > 0:
+            self._d3plot.arrays[ArrayType.element_shell_is_alive]         = np.array(element_shell_is_alive)
         
         if "nbFacets" in rr.arrays and ("Stress (lower)" in rr.arrays or "Stress (lower)" in rr.arrays):   
             self._d3plot.arrays[ArrayType.element_shell_stress]           = np.array(element_shell_stress)

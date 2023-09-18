@@ -861,18 +861,18 @@ class RadiossReader:
 
         # Unpack 2D element part indexes       
 
-        if "defPartA" in self.raw_arrays:        
+        if self.raw_header["nbParts"] > 0 and "defPartA" in self.raw_arrays:        
             start=0
             tmp_list_i=np.empty(self.raw_arrays["defPartA"][-1], int)
             tmp_list_n=np.empty(self.raw_arrays["defPartA"][-1], str)
             small_dict= self.raw_arrays["pTextA"]
                  
             
-            for _ipart3d, ipart3d in enumerate(self.raw_arrays["defPartA"]):
-                end                     =   ipart3d
+            for _ipart2d, ipart2d in enumerate(self.raw_arrays["defPartA"]):
+                end                     =   ipart2d
                 num_el                  =   end + start 
-                _name                   =   small_dict[_ipart3d].strip()
-                _index                  =   _ipart3d
+                _name                   =   small_dict[_ipart2d].strip()
+                _index                  =   _ipart2d
                 tmp_list_i[start:end]   =   _index
                 tmp_list_n[start:end]   =   _name
                 start                   =   end
@@ -1021,7 +1021,7 @@ class RadiossReader:
         # Unpack solid tensor arrays 
         if "nbTens3D" in self.raw_header:        
             for ietens in range(0, self.raw_header["nbTens3D"]):
-                tensor                  = "element_solid_" + str(self.raw_arrays["fText3DA"][ietens]).lower().replace(" ", "_").strip()
+                tensor                  = "element_solid_" + str(self.raw_arrays["tText3DA"][ietens]).lower().replace(" ", "_").strip()
                 start                   = ietens * self.raw_header["nbElts3D"]
                 end                     = (ietens+1) * self.raw_header["nbElts3D"]
                 _tmp_list               = np.array(self.raw_arrays["tensVal3DA"][start : end])
