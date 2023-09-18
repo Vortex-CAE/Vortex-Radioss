@@ -272,7 +272,7 @@ class RadiossReader:
                 position +=width
         return array_from_buffer, position    
            
-    def load_file(self, file: Union[str, BinaryBuffer]) -> 'ReadRadioss':
+    def load_file(self, file: Union[str, BinaryBuffer]) -> 'RadiossReader':
         
         import time
         time_start=time.time()
@@ -513,6 +513,14 @@ class RadiossReader:
                 self.raw_arrays["partMaterial3DA"] , position = self.add_array(self.raw_header["nbParts3D"], 1, position, bb, self.itype)
                 # Array of properties for each part
                 self.raw_arrays["partProperties3DA"] , position = self.add_array(self.raw_header["nbParts3D"], 1, position, bb, self.itype)
+
+        else:
+
+            # Number of 3D elements
+            self.raw_header["nbElts3D"] = 0
+            
+            # Number of 3D parts
+            self.raw_header["nbParts3D"] = 0
         
         # ********************
         # 1D GEOMETRY
@@ -584,6 +592,13 @@ class RadiossReader:
                 # 1D properties array
                 self.raw_arrays["partProperties1DA"] , position = self.add_array(self.raw_header["nbParts1D"], 1, position, bb, self.itype)
         
+        else:
+
+            # Number of 1D elements
+            self.raw_header["nbElts1D"] = 0
+            
+            # Number of 1D parts
+            self.raw_header["nbParts1D"] = 0
         # ********************
         # Parse the Heirarchy 
         # ********************      
@@ -924,8 +939,8 @@ class RadiossReader:
                 self.arrays[scalar] = np.array(tmp_list)                     
                 
         # Unpack 1D tensor arrays 
-        if "nbTens" in self.raw_header:        
-            for ietens in range(0, self.raw_header["nbTors1D"]):
+        if "nbTors1d" in self.raw_header:        
+            for ietens in range(0, self.raw_header["nbTors1d"]):
                 tensor                  = "element_beam_" + str(self.raw_arrays["fText1DA"][ietens]).lower().replace(" ", "_").strip()
                 start                   = ietens * self.raw_header["nbElts1D"]
                 end                     = (ietens+1) * self.raw_header["nbElts1D"]
@@ -1004,7 +1019,7 @@ class RadiossReader:
                 self.arrays[scalar] = np.array(tmp_list)                                  
 
         # Unpack solid tensor arrays 
-        if "nbTens" in self.raw_header:        
+        if "nbTens3D" in self.raw_header:        
             for ietens in range(0, self.raw_header["nbTens3D"]):
                 tensor                  = "element_solid_" + str(self.raw_arrays["fText3DA"][ietens]).lower().replace(" ", "_").strip()
                 start                   = ietens * self.raw_header["nbElts3D"]

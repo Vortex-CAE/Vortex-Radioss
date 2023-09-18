@@ -8,13 +8,15 @@ from typing import Union
 import numpy as np
 import rich
 
-from lasso.io.BinaryBuffer import BinaryBuffer
+from lasso.io.binary_buffer import BinaryBuffer
 from lasso.logging import get_logger
+
+from .RadiossReader import RadiossReader
 
 LOGGER = get_logger(__file__)
 
 class RadiossTHReader:
-    ''' Class for reading a Radioss Animation File
+    ''' Class for reading a Radioss TH File
     '''
 
     # meta
