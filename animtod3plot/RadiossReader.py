@@ -272,7 +272,7 @@ class RadiossReader:
                 position +=width
         return array_from_buffer, position    
            
-    def load_file(self, file: Union[str, BinaryBuffer]) -> 'ReadRadioss':
+    def load_file(self, file: Union[str, BinaryBuffer]) -> 'RadiossReader':
         
         import time
         time_start=time.time()
@@ -513,6 +513,14 @@ class RadiossReader:
                 self.raw_arrays["partMaterial3DA"] , position = self.add_array(self.raw_header["nbParts3D"], 1, position, bb, self.itype)
                 # Array of properties for each part
                 self.raw_arrays["partProperties3DA"] , position = self.add_array(self.raw_header["nbParts3D"], 1, position, bb, self.itype)
+
+        else:
+
+            # Number of 3D elements
+            self.raw_header["nbElts3D"] = 0
+            
+            # Number of 3D parts
+            self.raw_header["nbParts3D"] = 0
         
         # ********************
         # 1D GEOMETRY
@@ -584,6 +592,13 @@ class RadiossReader:
                 # 1D properties array
                 self.raw_arrays["partProperties1DA"] , position = self.add_array(self.raw_header["nbParts1D"], 1, position, bb, self.itype)
         
+        else:
+
+            # Number of 1D elements
+            self.raw_header["nbElts1D"] = 0
+            
+            # Number of 1D parts
+            self.raw_header["nbParts1D"] = 0
         # ********************
         # Parse the Heirarchy 
         # ********************      
@@ -846,18 +861,18 @@ class RadiossReader:
 
         # Unpack 2D element part indexes       
 
-        if "defPartA" in self.raw_arrays:        
+        if self.raw_header["nbParts"] > 0 and "defPartA" in self.raw_arrays:        
             start=0
             tmp_list_i=np.empty(self.raw_arrays["defPartA"][-1], int)
             tmp_list_n=np.empty(self.raw_arrays["defPartA"][-1], str)
             small_dict= self.raw_arrays["pTextA"]
                  
             
-            for _ipart3d, ipart3d in enumerate(self.raw_arrays["defPartA"]):
-                end                     =   ipart3d
+            for _ipart2d, ipart2d in enumerate(self.raw_arrays["defPartA"]):
+                end                     =   ipart2d
                 num_el                  =   end + start 
-                _name                   =   small_dict[_ipart3d].strip()
-                _index                  =   _ipart3d
+                _name                   =   small_dict[_ipart2d].strip()
+                _index                  =   _ipart2d
                 tmp_list_i[start:end]   =   _index
                 tmp_list_n[start:end]   =   _name
                 start                   =   end
@@ -924,8 +939,8 @@ class RadiossReader:
                 self.arrays[scalar] = np.array(tmp_list)                     
                 
         # Unpack 1D tensor arrays 
-        if "nbTens" in self.raw_header:        
-            for ietens in range(0, self.raw_header["nbTors1D"]):
+        if "nbTors1d" in self.raw_header:        
+            for ietens in range(0, self.raw_header["nbTors1d"]):
                 tensor                  = "element_beam_" + str(self.raw_arrays["fText1DA"][ietens]).lower().replace(" ", "_").strip()
                 start                   = ietens * self.raw_header["nbElts1D"]
                 end                     = (ietens+1) * self.raw_header["nbElts1D"]
@@ -1004,9 +1019,9 @@ class RadiossReader:
                 self.arrays[scalar] = np.array(tmp_list)                                  
 
         # Unpack solid tensor arrays 
-        if "nbTens" in self.raw_header:        
+        if "nbTens3D" in self.raw_header:        
             for ietens in range(0, self.raw_header["nbTens3D"]):
-                tensor                  = "element_solid_" + str(self.raw_arrays["fText3DA"][ietens]).lower().replace(" ", "_").strip()
+                tensor                  = "element_solid_" + str(self.raw_arrays["tText3DA"][ietens]).lower().replace(" ", "_").strip()
                 start                   = ietens * self.raw_header["nbElts3D"]
                 end                     = (ietens+1) * self.raw_header["nbElts3D"]
                 _tmp_list               = np.array(self.raw_arrays["tensVal3DA"][start : end])
