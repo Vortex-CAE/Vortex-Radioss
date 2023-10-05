@@ -840,7 +840,7 @@ class RadiossReader:
         # Unpack 1D element part indexes
 
         if "defPart1DA" in self.raw_arrays:        
-            if self.raw_arrays["defPart1DA"]:
+            if self.raw_arrays["defPart1DA"] != []:
                 start=0
                 tmp_list_i=np.empty(self.raw_arrays["defPart1DA"][-1], int)
                 tmp_list_n=np.empty(self.raw_arrays["defPart1DA"][-1], str)
@@ -863,7 +863,7 @@ class RadiossReader:
         # Unpack 2D element part indexes       
 
         if self.raw_header["nbParts"] > 0 and "defPartA" in self.raw_arrays:        
-            if self.raw_arrays["defPartA"]:
+            if self.raw_arrays["defPartA"] != []:
                 start=0
                 tmp_list_i=np.empty(self.raw_arrays["defPartA"][-1], int)
                 tmp_list_n=np.empty(self.raw_arrays["defPartA"][-1], str)
@@ -884,7 +884,7 @@ class RadiossReader:
         
         # Unpack solid element part indexes
         if "defPart3DA" in self.raw_arrays:  
-            if self.raw_arrays["defPart3DA"]:
+            if self.raw_arrays["defPart3DA"] != []:
                 start=0
                 tmp_list_i=np.empty(self.raw_arrays["defPart3DA"][-1], int)
                 tmp_list_n=np.empty(self.raw_arrays["defPart3DA"][-1], str)
