@@ -840,66 +840,69 @@ class RadiossReader:
         # Unpack 1D element part indexes
 
         if "defPart1DA" in self.raw_arrays:        
-            start=0
-            tmp_list_i=np.empty(self.raw_arrays["defPart1DA"][-1], int)
-            tmp_list_n=np.empty(self.raw_arrays["defPart1DA"][-1], str)
-            small_dict= self.raw_arrays["pText1DA"]
-            
-            
-            
-            for _ipart1d, ipart1d in enumerate(self.raw_arrays["defPart1DA"]):
-                end                     =   ipart1d
-                num_el                  =   end + start 
-                _name                   =   small_dict[_ipart1d].strip()
-                _index                  =   _ipart1d
-                tmp_list_i[start:end]   =   _index
-                tmp_list_n[start:end]   =   _name
-                start                   =   end
-
-            self.arrays["element_beam_part_indexes"]=np.array(tmp_list_i)
-            self.arrays["element_beam_part_ids"]=np.array(tmp_list_n)                                                            
+            if self.raw_arrays["defPart1DA"]:
+                start=0
+                tmp_list_i=np.empty(self.raw_arrays["defPart1DA"][-1], int)
+                tmp_list_n=np.empty(self.raw_arrays["defPart1DA"][-1], str)
+                small_dict= self.raw_arrays["pText1DA"]
+                
+                
+                
+                for _ipart1d, ipart1d in enumerate(self.raw_arrays["defPart1DA"]):
+                    end                     =   ipart1d
+                    num_el                  =   end + start 
+                    _name                   =   small_dict[_ipart1d].strip()
+                    _index                  =   _ipart1d
+                    tmp_list_i[start:end]   =   _index
+                    tmp_list_n[start:end]   =   _name
+                    start                   =   end
+    
+                self.arrays["element_beam_part_indexes"]=np.array(tmp_list_i)
+                self.arrays["element_beam_part_ids"]=np.array(tmp_list_n)                                                            
 
         # Unpack 2D element part indexes       
 
         if self.raw_header["nbParts"] > 0 and "defPartA" in self.raw_arrays:        
-            start=0
-            tmp_list_i=np.empty(self.raw_arrays["defPartA"][-1], int)
-            tmp_list_n=np.empty(self.raw_arrays["defPartA"][-1], str)
-            small_dict= self.raw_arrays["pTextA"]
-                 
-            
-            for _ipart2d, ipart2d in enumerate(self.raw_arrays["defPartA"]):
-                end                     =   ipart2d
-                num_el                  =   end + start 
-                _name                   =   small_dict[_ipart2d].strip()
-                _index                  =   _ipart2d
-                tmp_list_i[start:end]   =   _index
-                tmp_list_n[start:end]   =   _name
-                start                   =   end
-
-            self.arrays["element_shell_part_indexes"]=np.array(tmp_list_i)
-            self.arrays["element_shell_part_ids"]=np.array(tmp_list_n)                   
+            if self.raw_arrays["defPartA"]:
+                start=0
+                tmp_list_i=np.empty(self.raw_arrays["defPartA"][-1], int)
+                tmp_list_n=np.empty(self.raw_arrays["defPartA"][-1], str)
+                small_dict= self.raw_arrays["pTextA"]
+                     
+                
+                for _ipart2d, ipart2d in enumerate(self.raw_arrays["defPartA"]):
+                    end                     =   ipart2d
+                    num_el                  =   end + start 
+                    _name                   =   small_dict[_ipart2d].strip()
+                    _index                  =   _ipart2d
+                    tmp_list_i[start:end]   =   _index
+                    tmp_list_n[start:end]   =   _name
+                    start                   =   end
+    
+                self.arrays["element_shell_part_indexes"]=np.array(tmp_list_i)
+                self.arrays["element_shell_part_ids"]=np.array(tmp_list_n)                   
         
         # Unpack solid element part indexes
-        if "defPart3DA" in self.raw_arrays:        
-            start=0
-            tmp_list_i=np.empty(self.raw_arrays["defPart3DA"][-1], int)
-            tmp_list_n=np.empty(self.raw_arrays["defPart3DA"][-1], str)
-            small_dict= self.raw_arrays["pText3DA"]
-            
-            
-            
-            for _ipart3d, ipart3d in enumerate(self.raw_arrays["defPart3DA"]):
-                end                     =   ipart3d
-                num_el                  =   end + start 
-                _name                   =   small_dict[_ipart3d].strip()
-                _index                  =   _ipart3d
-                tmp_list_i[start:end]   =   _index
-                tmp_list_n[start:end]   =   _name
-                start                   =   end
-
-            self.arrays["element_solid_part_indexes"]=np.array(tmp_list_i)
-            self.arrays["element_solid_part_ids"]=np.array(tmp_list_n)               
+        if "defPart3DA" in self.raw_arrays:  
+            if self.raw_arrays["defPart3DA"]:
+                start=0
+                tmp_list_i=np.empty(self.raw_arrays["defPart3DA"][-1], int)
+                tmp_list_n=np.empty(self.raw_arrays["defPart3DA"][-1], str)
+                small_dict= self.raw_arrays["pText3DA"]
+                
+                
+                
+                for _ipart3d, ipart3d in enumerate(self.raw_arrays["defPart3DA"]):
+                    end                     =   ipart3d
+                    num_el                  =   end + start 
+                    _name                   =   small_dict[_ipart3d].strip()
+                    _index                  =   _ipart3d
+                    tmp_list_i[start:end]   =   _index
+                    tmp_list_n[start:end]   =   _name
+                    start                   =   end
+    
+                self.arrays["element_solid_part_indexes"]=np.array(tmp_list_i)
+                self.arrays["element_solid_part_ids"]=np.array(tmp_list_n)               
         
         # Unpack sph element part indexes        
         if "defPartSPH" in self.raw_arrays:
