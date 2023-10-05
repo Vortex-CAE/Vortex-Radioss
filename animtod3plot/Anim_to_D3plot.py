@@ -45,7 +45,7 @@ class readAndConvert:
     def sequential(input_array):
         "Radioss puts a load of zeros at the end, increase by 1 to keep Primer happy for sequential node numbering"    
   
-        zero_num = max(input_array)
+        zero_num = max(input_array).astype('int64')
         output = []
         for i in input_array:
             if i != 0:
