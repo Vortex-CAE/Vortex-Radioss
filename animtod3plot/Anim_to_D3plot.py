@@ -4,10 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from Vortex_Radioss_main.lasso.dyna.d3plot import D3plot
-from Vortex_Radioss_main.lasso.dyna.array_type import ArrayType
-from Vortex_Radioss_main.animtod3plot.RadiossTHReader import RadiossTHReader
-from Vortex_Radioss_main.animtod3plot.RadiossReader import RadiossReader
+from Vortex_Radioss.lasso.dyna.d3plot import D3plot
+from Vortex_Radioss.lasso.dyna.array_type import ArrayType
+from Vortex_Radioss.animtod3plot.RadiossTHReader import RadiossTHReader
+from Vortex_Radioss.animtod3plot.RadiossReader import RadiossReader
 
 import numpy as np
 import os
