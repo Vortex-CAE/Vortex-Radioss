@@ -8,8 +8,10 @@ from typing import Union
 import numpy as np
 import rich
 
-from lasso.io.binary_buffer import BinaryBuffer
-from lasso.logging import get_logger
+import vortex_lasso
+
+from Vortex_Radioss_main.lasso.io.binary_buffer import BinaryBuffer
+from Vortex_Radioss_main.lasso.logging import get_logger
 
 LOGGER = get_logger(__file__)
 

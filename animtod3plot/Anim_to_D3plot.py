@@ -4,17 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+from Vortex_Radioss_main.lasso.dyna.d3plot import D3plot
+from Vortex_Radioss_main.lasso.dyna.array_type import ArrayType
+from Vortex_Radioss_main.animtod3plot.RadiossTHReader import RadiossTHReader
+from Vortex_Radioss_main.animtod3plot.RadiossReader import RadiossReader
 
-from lasso.dyna.d3plot import D3plot
 import numpy as np
-from lasso.dyna.array_type import ArrayType
 import os
-
-from .RadiossTHReader import RadiossTHReader
-from .RadiossReader import RadiossReader
-
 import time
 import math
+from tqdm import tqdm
+import glob
 
 
 class readAndConvert:
@@ -64,15 +64,18 @@ class readAndConvert:
        for i_a, a in enumerate(_index_tracker):
            index_tracker[a] = i_a    
            
-       return _index_tracker
-
+       return np.array(_index_tracker)
+   
     def apply_sorter(input_array, tracker_array):
+        return input_array[tracker_array]   
     
-        # old index to new index
-        output_array = [0] * len(input_array)
-        for i_a, a in enumerate(tracker_array):
-            output_array[i_a] = input_array[tracker_array[i_a]]
-        return np.array(output_array)
+    def generate_random_name(length, ifile):
+        import random
+        import string
+        # choose from all lowercase letter
+        letters = string.ascii_lowercase
+        result_str = ''.join(random.choice(letters) for i in range(length))
+        return "_" + result_str + str(ifile)    
 
     def A_2_D(self,file_stem):
     
@@ -80,62 +83,58 @@ class readAndConvert:
             return True
 
         state_index = 1
-        file_list = []
-        
-        while(True):
-            file_name = file_stem + "A" + '%3.3i' % state_index
-            if os.path.isfile(file_name):
-                file_list.append(file_name)
-                state_index += 1
-            else:
-                break
+        file_list = glob.glob(file_stem + "A*[0-9]")
         
         shell_output = {}
         shell_output["element_shell_thickness"] = "element_shell_thickness"
         shell_output["element_shell_specific_energy"] = "element_shell_internal_energy"
 
-
-        node_acceleration               = []
-        node_velocity                   = []
-        node_displacement               = []
         original_node_coordinates       = None
         
-        element_beam_is_alive           = []
-        element_shell_is_alive          = []
-        element_solid_is_alive          = []
-        
-        element_shell_thickness         = []
-        element_shell_specific_energy   = []
-        element_shell_plastic_strain    = []
-        element_shell_stress            = []
-        
-        
-        part_names                      = []
-        
-        timesteps                       = []
+               
+        print("Re-sorting the indexes")
+        rr = RadiossReader(file_list[0]) 
+        if rr.raw_header["nbFacets"] > 0:
+            shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
 
+        if rr.raw_header["nbElts1D"] > 0:
+            beam_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]))
+
+        if rr.raw_header["nbElts3D"] > 0:
+            solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]))
+            
+        original_node_coordinates = rr.arrays["node_coordinates"]       
         
-        #rr_th = RadiossTHReader(file_stem + "T01")    
+        node_ids_out = readAndConvert.sequential(rr.arrays["node_ids"])
+        element_shell_ids_out = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
+        element_beam_ids_out = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]), beam_ids_tracker)
+        element_solid_ids_out = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
         
-        states = 0
-        for file in file_list:
-            print(states)
-            states +=1
+        del rr
+        
+        for ifile, file in enumerate(tqdm(file_list)):
+            
+            
             rr = RadiossReader(file) 
             
-            if states == 1:
-                if rr.raw_header["nbFacets"] > 0:
-                    shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
-
-                if rr.raw_header["nbElts1D"] > 0:
-                    beam_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]))
-
-                if rr.raw_header["nbElts3D"] > 0:
-                    solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]))
-
-
-                
-                original_node_coordinates = rr.arrays["node_coordinates"]
+            node_acceleration               = []
+            node_velocity                   = []
+            node_displacement               = []
+            
+            
+            element_beam_is_alive           = []
+            element_shell_is_alive          = []
+            element_solid_is_alive          = []
+            
+            element_shell_thickness         = []
+            element_shell_specific_energy   = []
+            element_shell_plastic_strain    = []
+            element_shell_stress            = []
+            
+            
+            part_names                      = []
+            
+            timesteps                       = []            
         
             "Node Updates"
 
@@ -243,157 +242,186 @@ class readAndConvert:
             "Timestep Updates"
             timesteps.append(rr.arrays["timesteps"])
         
-        "Assign the arrays to the D3PLOT class for writing"
-        
-        "Nodes"
-        self._d3plot.arrays[ArrayType.node_displacement]              = np.array(node_displacement)
-        self._d3plot.arrays[ArrayType.node_coordinates]               = original_node_coordinates
-        self._d3plot.arrays[ArrayType.node_ids]                       = readAndConvert.sequential(rr.arrays["node_ids"])
-
-        if "node_acceleration" in rr.arrays: 
-            self._d3plot.arrays[ArrayType.node_acceleration]              = np.array(node_acceleration)
-        if "node_velocity" in rr.arrays: 
-            self._d3plot.arrays[ArrayType.node_velocity]                  = np.array(node_velocity)
-        
-        "Shells"    
-        if rr.raw_header["nbFacets"] > 0:
-            self._d3plot.arrays[ArrayType.element_shell_ids]              = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
-            self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker)
-            self._d3plot.arrays[ArrayType.element_shell_part_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
-            self._d3plot.arrays[ArrayType.element_shell_is_alive]         = np.array(element_shell_is_alive)
+            "Assign the arrays to the D3PLOT class for writing"
             
-        v=np.array(rr.raw_arrays["pTextA"])
-        
-        shell_part_ids                                          =  np.array(rr.raw_arrays["pTextA"]).astype("U9").astype(int)
-        shell_part_titles                                       =  np.array(rr.raw_arrays["pTextA"]) 
-        
-        shell_num = rr.raw_header["nbFacets"]
-        shell_part_num = len(shell_part_ids)
-        
-        if element_shell_thickness != []:
-            self._d3plot.arrays[ArrayType.element_shell_thickness]        = np.array(element_shell_thickness)
-
-        if element_shell_specific_energy != []:
-            self._d3plot.arrays[ArrayType.element_shell_internal_energy]  = np.array(element_shell_specific_energy)
-
-        #if element_shell_plastic_strain != []:
-        #    print("element_shell_plastic_strain != []")
-
-            #_element_shell_plastic_strain = np.zeros(shape=(rr.raw_header["nbFacets"], 2))
-            #_element_shell_plastic_strain[0 , :] = np.zeros(shape=rr.raw_header["nbFacets"])
-            #_element_shell_plastic_strain[:,1] = rr.arrays["element_shell_plastic_strain"]
-            #element_shell_plastic_strain.append(readAndConvert.apply_sorter(_element_shell_plastic_strain, shell_ids_tracker))
-
-            #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain]           = np.array(element_shell_plastic_strain)
-
+            "Nodes"
+            self._d3plot.arrays[ArrayType.node_displacement]              = np.array(node_displacement)
+            self._d3plot.arrays[ArrayType.node_coordinates]               = original_node_coordinates                        
             
             
-            #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain,0]  = np.zeros(shape=(rr.raw_header["nbFacets"]))
-            #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain,1]  = np.array(element_shell_plastic_strain)
-
-            #print(element_shell_plastic_strain)
-        
-            #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain] = np.zeros(shape=(states, rr.raw_header["nbFacets"], 2))
-        
-        
-        if element_shell_stress != []:   
-            self._d3plot.arrays[ArrayType.element_shell_stress]           = np.array(element_shell_stress)
-        
-        "Beams"
-        
-        if rr.raw_header["nbElts1D"] > 0: 
-            additional_beam_number                              = rr.raw_header["nbElts1D"] - len(rr.arrays["element_beam_part_indexes"])
-            additional_beams                                    = np.zeros(shape=(additional_beam_number))
-            additional_beams.fill(max(rr.arrays["element_beam_part_indexes"])+1)
-            element_beam_part_indexes                           = np.concatenate([rr.arrays["element_beam_part_indexes"], additional_beams])
-        
-            #self._d3plot.arrays[ArrayType.element_beam_ids] = rr.arrays["element_beam_ids"]
-            self._d3plot.arrays[ArrayType.element_beam_ids]              = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]), beam_ids_tracker)
-        
-            element_beam_node_indexes=np.zeros(shape=(rr.raw_header["nbElts1D"],5))
-        
-            element_beam_node_indexes[:,0]                      = rr.arrays["element_beam_node_indexes"][:,0]
-            element_beam_node_indexes[:,1]                      = rr.arrays["element_beam_node_indexes"][:,1]
-            self._d3plot.arrays[ArrayType.element_beam_node_indexes]  = element_beam_node_indexes.astype(int)
-            self._d3plot.arrays[ArrayType.element_beam_part_indexes]  = element_beam_part_indexes.astype(int) + shell_part_num
-        
-            self._d3plot.arrays[ArrayType.element_beam_is_alive]      = np.array(element_beam_is_alive)
-        
-        
-            #self._d3plot.arrays[ArrayType.element_beam_axial_force]  = d3.arrays["element_beam_axial_force"]
-            #self._d3plot.arrays[ArrayType.element_beam_bending_moment] = d3.arrays["element_beam_bending_moment"]
-            #self._d3plot.arrays[ArrayType.element_beam_shear_force] = d3.arrays["element_beam_shear_force"]
-            #self._d3plot.arrays[ArrayType.element_beam_torsion_moment] = d3.arrays["element_beam_torsion_moment"]
-        
-            "Partless beams exists so we have to generate a dummy one 1000000000 - this could be improved"
-        
-            beam_part_ids                                       =   np.concatenate([np.array(rr.raw_arrays["pText1DA"])\
-                                                                                    .astype("U9").astype(int),\
-                                                                                    np.array([1000000000])])
-            beam_part_titles                                    =   np.concatenate([np.array(rr.raw_arrays["pText1DA"]),
-                                                                                    np.array([1000000000])])
-            beam_part_num                                       =   len(beam_part_ids)
-        
-        else:
-            beam_part_ids                                       =   []
-            beam_part_titles                                    =   []
-            beam_part_num                                       =   0
-      
-        "Solids"
-        
-        if rr.raw_header["nbElts3D"] > 0: 
-            self._d3plot.arrays[ArrayType.element_solid_node_indexes] = rr.arrays["element_solid_node_indexes"]
-            self._d3plot.arrays[ArrayType.element_solid_part_indexes] = rr.arrays["element_solid_part_indexes"] + shell_part_num + beam_part_num
-        
-            self._d3plot.arrays[ArrayType.element_solid_is_alive]      = np.array(element_solid_is_alive)
-            self._d3plot.arrays[ArrayType.element_solid_ids]            = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
-        
-            #self._d3plot.arrays[ArrayType.element_solid_effective_plastic_strain] = d3.arrays["element_solid_effective_plastic_strain"]
-            #self._d3plot.arrays[ArrayType.element_solid_ids] = d3.arrays["element_solid_ids"]
-            #self._d3plot.arrays[ArrayType.element_solid_node_indexes] = rr.arrays["element_solid_node_indexes"]
-            #self._d3plot.arrays[ArrayType.element_solid_part_indexes] = rr.arrays["element_solid_part_indexes"]
-            #self._d3plot.arrays[ArrayType.element_solid_stress] = np.zeros(shape=(states, rr.raw_header["nbElts3D"], 9))
-        
-            solid_part_ids                                      =  np.array(rr.raw_arrays["pText3DA"]).astype("U9").astype(int)
-            solid_part_titles                                    =  np.array(rr.raw_arrays["pText3DA"])
-        
-        else:
-            solid_part_ids                                      =   []
-            solid_part_titles                                   =   []
-
-
-        "Global"
-        #self._d3plot.arrays[ArrayType.global_internal_energy] = np.array([0] * states)
-        #self._d3plot.arrays[ArrayType.global_kinetic_energy] = np.array([0] * states)
-        #self._d3plot.arrays[ArrayType.global_total_energy] = np.array([0] * states)
-        #self._d3plot.arrays[ArrayType.global_velocity] = np.array([[0, 0, 0]] * states).astype(float)
-        
-        "Parts"
-
-        self._d3plot.arrays[ArrayType.part_ids]                   = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
-        #self._d3plot.arrays[ArrayType.part_mass]                  = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
-        
-        #self._d3plot.arrays[ArrayType.part_hourglass_energy]      = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
-        #self._d3plot.arrays[ArrayType.part_ids_cross_references] = d3.arrays["part_ids_cross_references"]
-        #self._d3plot.arrays[ArrayType.part_ids_unordered] = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
-        #self._d3plot.arrays[ArrayType.part_internal_energy] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
-        
-        #self._d3plot.arrays[ArrayType.part_kinetic_energy] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
-       
-        self._d3plot.arrays[ArrayType.part_titles] = np.array(np.concatenate([shell_part_titles, beam_part_titles, solid_part_titles])).astype('S')
-        self._d3plot.arrays[ArrayType.part_titles_ids] = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
-        #self._d3plot.arrays[ArrayType.part_velocity] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
-        #self._d3plot.arrays[ArrayType.rigid_wall_force] = d3.arrays["rigid_wall_force"]
-
-        self._d3plot.arrays[ArrayType.global_timesteps]           = np.array(timesteps)
-
-        self._d3plot.write_d3plot(file_stem + ".d3plot", single_file = False)
+            self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out
+    
+            if "node_acceleration" in rr.arrays: 
+                self._d3plot.arrays[ArrayType.node_acceleration]              = np.array(node_acceleration)
+            if "node_velocity" in rr.arrays: 
+                self._d3plot.arrays[ArrayType.node_velocity]                  = np.array(node_velocity)
+            
+            "Shells"    
+            if rr.raw_header["nbFacets"] > 0:
+                self._d3plot.arrays[ArrayType.element_shell_ids]              = element_shell_ids_out
+                self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker)
+                self._d3plot.arrays[ArrayType.element_shell_part_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
+                self._d3plot.arrays[ArrayType.element_shell_is_alive]         = np.array(element_shell_is_alive)
+                
+            v=np.array(rr.raw_arrays["pTextA"])
+            
+            shell_part_ids                                          =  np.array(rr.raw_arrays["pTextA"]).astype("U9").astype(int)
+            shell_part_titles                                       =  np.array(rr.raw_arrays["pTextA"]) 
+            
+            shell_num = rr.raw_header["nbFacets"]
+            shell_part_num = len(shell_part_ids)
+            
+            if element_shell_thickness != []:
+                self._d3plot.arrays[ArrayType.element_shell_thickness]        = np.array(element_shell_thickness)
+    
+            if element_shell_specific_energy != []:
+                self._d3plot.arrays[ArrayType.element_shell_internal_energy]  = np.array(element_shell_specific_energy)
+    
+            #if element_shell_plastic_strain != []:
+            #    print("element_shell_plastic_strain != []")
+    
+                #_element_shell_plastic_strain = np.zeros(shape=(rr.raw_header["nbFacets"], 2))
+                #_element_shell_plastic_strain[0 , :] = np.zeros(shape=rr.raw_header["nbFacets"])
+                #_element_shell_plastic_strain[:,1] = rr.arrays["element_shell_plastic_strain"]
+                #element_shell_plastic_strain.append(readAndConvert.apply_sorter(_element_shell_plastic_strain, shell_ids_tracker))
+    
+                #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain]           = np.array(element_shell_plastic_strain)
+    
+                
+                
+                #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain,0]  = np.zeros(shape=(rr.raw_header["nbFacets"]))
+                #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain,1]  = np.array(element_shell_plastic_strain)
+    
+                #print(element_shell_plastic_strain)
+            
+                #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain] = np.zeros(shape=(states, rr.raw_header["nbFacets"], 2))
+            
+            
+            if element_shell_stress != []:   
+                self._d3plot.arrays[ArrayType.element_shell_stress]           = np.array(element_shell_stress)
+            
+            "Beams"
+            
+            if rr.raw_header["nbElts1D"] > 0: 
+                additional_beam_number                              = rr.raw_header["nbElts1D"] - len(rr.arrays["element_beam_part_indexes"])
+                additional_beams                                    = np.zeros(shape=(additional_beam_number))
+                additional_beams.fill(max(rr.arrays["element_beam_part_indexes"])+1)
+                element_beam_part_indexes                           = np.concatenate([rr.arrays["element_beam_part_indexes"], additional_beams])
+            
+                #self._d3plot.arrays[ArrayType.element_beam_ids] = rr.arrays["element_beam_ids"]
+                self._d3plot.arrays[ArrayType.element_beam_ids]              = element_beam_ids_out
+            
+                element_beam_node_indexes=np.zeros(shape=(rr.raw_header["nbElts1D"],5))
+            
+                element_beam_node_indexes[:,0]                      = rr.arrays["element_beam_node_indexes"][:,0]
+                element_beam_node_indexes[:,1]                      = rr.arrays["element_beam_node_indexes"][:,1]
+                self._d3plot.arrays[ArrayType.element_beam_node_indexes]  = element_beam_node_indexes.astype(int)
+                self._d3plot.arrays[ArrayType.element_beam_part_indexes]  = element_beam_part_indexes.astype(int) + shell_part_num
+            
+                self._d3plot.arrays[ArrayType.element_beam_is_alive]      = np.array(element_beam_is_alive)
+            
+            
+                #self._d3plot.arrays[ArrayType.element_beam_axial_force]  = d3.arrays["element_beam_axial_force"]
+                #self._d3plot.arrays[ArrayType.element_beam_bending_moment] = d3.arrays["element_beam_bending_moment"]
+                #self._d3plot.arrays[ArrayType.element_beam_shear_force] = d3.arrays["element_beam_shear_force"]
+                #self._d3plot.arrays[ArrayType.element_beam_torsion_moment] = d3.arrays["element_beam_torsion_moment"]
+            
+                "Partless beams exists so we have to generate a dummy one 1000000000 - this could be improved"
+            
+                beam_part_ids                                       =   np.concatenate([np.array(rr.raw_arrays["pText1DA"])\
+                                                                                        .astype("U9").astype(int),\
+                                                                                        np.array([1000000000])])
+                beam_part_titles                                    =   np.concatenate([np.array(rr.raw_arrays["pText1DA"]),
+                                                                                        np.array([1000000000])])
+                beam_part_num                                       =   len(beam_part_ids)
+            
+            else:
+                beam_part_ids                                       =   []
+                beam_part_titles                                    =   []
+                beam_part_num                                       =   0
+          
+            "Solids"
+            
+            if rr.raw_header["nbElts3D"] > 0: 
+                self._d3plot.arrays[ArrayType.element_solid_node_indexes] = rr.arrays["element_solid_node_indexes"]
+                self._d3plot.arrays[ArrayType.element_solid_part_indexes] = rr.arrays["element_solid_part_indexes"] + shell_part_num + beam_part_num
+            
+                self._d3plot.arrays[ArrayType.element_solid_is_alive]      = np.array(element_solid_is_alive)
+                self._d3plot.arrays[ArrayType.element_solid_ids]            = element_solid_ids_out
+            
+                #self._d3plot.arrays[ArrayType.element_solid_effective_plastic_strain] = d3.arrays["element_solid_effective_plastic_strain"]
+                #self._d3plot.arrays[ArrayType.element_solid_ids] = d3.arrays["element_solid_ids"]
+                #self._d3plot.arrays[ArrayType.element_solid_node_indexes] = rr.arrays["element_solid_node_indexes"]
+                #self._d3plot.arrays[ArrayType.element_solid_part_indexes] = rr.arrays["element_solid_part_indexes"]
+                #self._d3plot.arrays[ArrayType.element_solid_stress] = np.zeros(shape=(states, rr.raw_header["nbElts3D"], 9))
+            
+                solid_part_ids                                      =  np.array(rr.raw_arrays["pText3DA"]).astype("U9").astype(int)
+                solid_part_titles                                    =  np.array(rr.raw_arrays["pText3DA"])
+            
+            else:
+                solid_part_ids                                      =   []
+                solid_part_titles                                   =   []
+    
+    
+            "Global"
+            #self._d3plot.arrays[ArrayType.global_internal_energy] = np.array([0] * states)
+            #self._d3plot.arrays[ArrayType.global_kinetic_energy] = np.array([0] * states)
+            #self._d3plot.arrays[ArrayType.global_total_energy] = np.array([0] * states)
+            #self._d3plot.arrays[ArrayType.global_velocity] = np.array([[0, 0, 0]] * states).astype(float)
+            
+            "Parts"
+    
+            self._d3plot.arrays[ArrayType.part_ids]                   = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
+            #self._d3plot.arrays[ArrayType.part_mass]                  = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
+            
+            #self._d3plot.arrays[ArrayType.part_hourglass_energy]      = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
+            #self._d3plot.arrays[ArrayType.part_ids_cross_references] = d3.arrays["part_ids_cross_references"]
+            #self._d3plot.arrays[ArrayType.part_ids_unordered] = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
+            #self._d3plot.arrays[ArrayType.part_internal_energy] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
+            
+            #self._d3plot.arrays[ArrayType.part_kinetic_energy] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
+           
+            self._d3plot.arrays[ArrayType.part_titles] = np.array(np.concatenate([shell_part_titles, beam_part_titles, solid_part_titles])).astype('S')
+            self._d3plot.arrays[ArrayType.part_titles_ids] = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
+            #self._d3plot.arrays[ArrayType.part_velocity] = np.array([np.concatenate([np.array(part_mass), np.zeros(shape=(rr.raw_header["nbParts1D"] + 1)), np.zeros(shape=(rr.raw_header["nbParts3D"]))])] * states)
+            #self._d3plot.arrays[ArrayType.rigid_wall_force] = d3.arrays["rigid_wall_force"]
+    
+            self._d3plot.arrays[ArrayType.global_timesteps]           = np.array(timesteps)
+            
+            
+            
+            random_name = readAndConvert.generate_random_name(10, ifile)
+            temp_d3plot_name = os.path.dirname(file_stem) + random_name
+            
+            self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
+            
+            "Rename or remove header"
+            if ifile == 0:
+                _ = file_stem + ".d3plot"
+                if os.path.isfile(_):
+                    os.remove(_)
+                os.rename(temp_d3plot_name, _)
+            else:
+                os.remove(temp_d3plot_name)
+                
+            "Rename plot state"
+            d3plot_index = ifile+1
+            if d3plot_index <100: 
+                padding = 2
+            else:
+                padding = 3
+                
+            _ = file_stem + ".d3plot" + str(d3plot_index).zfill(padding)
+            if os.path.isfile(_):
+                os.remove(_)
+            os.rename(temp_d3plot_name + "01", _)
+                         
          
         return True
         
 
 if __name__ == '__main__':        
     
-    file_stem = "test_path"
+    file_stem = "O:/model"
 
     a2d = readAndConvert(file_stem)
