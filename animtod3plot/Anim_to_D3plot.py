@@ -114,6 +114,357 @@ class readAndConvert:
         
         for ifile, file in enumerate(tqdm(file_list)):
             
+            if False:
+                database_extent_binary ={}
+                array_requirements = {}
+                
+                IGLB = False
+                
+                if IGLB:                
+                    """
+                    Output flag for global and part history variables such as internal
+                    energy, kinetic energy, rigid body velocity, etc., that is, the sort of
+                    data that can also be output to glstat and matsum.
+                    
+                    """
+                    
+                    # There are more but unsure of names...needs adding from an example d3plot
+                    
+                    flag = "IGLB"
+                    
+                    database_extent_binary[flag] = {} 
+                    _ = database_extent_binary[flag]
+                    _[0] = set([])
+                    _[1] = _[0].add(set(["global_internal_energy",
+                                         "part_internal_energy",
+                                         "global_kinetic_energy",
+                                         "part_kinetic_energy",
+                                         "rigid_body_velocity"]))
+                    
+                    array_requirements["global_internal_energy"] = {}
+                    _ = array_requirements["global_internal_energy"]
+                    _["dependents"]     = ["global_internal_energy"]
+                    _["shape"]          = (1,)
+                    _["convert"]        = None
+                    _["tracker"]        = None
+                    
+                    array_requirements["part_internal_energy"] = {}
+                    _ = array_requirements["part_internal_energy"]
+                    _["dependents"]     = ["part_internal_energy"]
+                    _["shape"]          = (1,n_parts)   
+                    _["convert"]        = convert.part_internal_energy
+                    _["tracker"]        = None
+                    
+                    
+                    array_requirements["global_kinetic_energy"] = {}
+                    _ = array_requirements["global_kinetic_energy"]
+                    _["dependents"]     = ["global_kinetic_energy"]
+                    _["shape"]          = (1,)
+                    _["convert"]        = convert.global_kinetic_energy
+                    _["tracker"]        = None
+                                                            
+                    array_requirements["part_kinetic_energy"] = {}
+                    _ = array_requirements["part_kinetic_energy"]
+                    _["dependents"]     = ["part_kinetic_energy"]
+                    _["shape"]          = (1,n_parts)    
+                    _["convert"]        = convert.part_kinetic_energy
+                    _["tracker"]        = None                    
+                    
+                    
+                    array_requirements["rigid_body_velocity"] = {}
+                    _ = array_requirements["rigid_body_velocity"]
+                    _["dependents"]     = ["rigid_body_velocity"]
+                    _["shape"]          = (1,n_rigid_body)     
+                    _["convert"]        = convert.rigid_body_velocity
+                    _["tracker"]        = None                       
+            
+           
+            IXYZ = False
+            if IXYZ:
+                """
+                Output flag for nodal coordinates
+                """
+                
+                database_extent_binary["IXYZ"]      = {}            
+                _                                   = database_extent_binary["IXYZ"]
+                database_extent_binary["IXYZ"][0]   = set([])
+                database_extent_binary["IXYZ"][1]   = _[0].add(self._d3plot.arrays[ArrayType.node_displacement])            
+            
+                array_requirements[self._d3plot.arrays[ArrayType.node_displacement]] = {}
+                _ = array_requirements[self._d3plot.arrays[ArrayType.node_displacement]]
+                
+                _["dependents"]     = ["node_coordinates"]
+                _["shape"]          = (1,n_nodes)
+                _["convert"]        = None
+                _["tracker"]        = None
+                
+            
+            IVEL = False
+            if IVEL:
+                """
+                Output flag for nodal velocity
+                """
+                
+                flag = "IVEL"
+                
+                database_extent_binary[flag] = {}      
+                _ = database_extent_binary[flag]
+                
+                database_extent_binary[flag][0] = set([])
+                database_extent_binary[flag][1] = _[0].add(self._d3plot.arrays[ArrayType.node_velocity])            
+            
+                array_requirements[self._d3plot.arrays[ArrayType.node_velocity]] = {}
+                _ = array_requirements[self._d3plot.arrays[ArrayType.node_velocity]]
+                _["dependents"]     = ["node_velocity"]
+                _["shape"]          = (1,n_nodes)
+                _["convert"]        = None
+                _["tracker"]        = None         
+                
+           
+            IACC = False 
+            if IACC:
+                 """
+                 Output flag for nodal acceleration
+                 """
+                 
+                 flag = "IACC"
+                 
+                 database_extent_binary[flag] = {}      
+                 _ = database_extent_binary[flag]
+                 
+                 database_extent_binary[flag][0] = set([])
+                 database_extent_binary[flag][1] = _[0].add(self._d3plot.arrays[ArrayType.node_acceleration])            
+             
+                 array_requirements[self._d3plot.arrays[ArrayType.node_acceleration]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.node_acceleration]]
+                 _["dependents"]     = ["node_acceleration"]
+                 _["shape"]          = (1,n_nodes)
+                 _["convert"]        = None
+                 _["tracker"]        = None        
+                 
+                 
+                 
+            MAXINT = False
+            
+            if MAXINT:
+                
+                nip_shells = self.get_shell_integration_point_n
+                
+                 
+            ISTRS = True 
+            if ISTRS:
+                 """
+                 Output flag for stress tensor and “plastic strain”
+                 """
+                 
+                 flag = "ISTRS"
+                 
+                 database_extent_binary[flag] = {}      
+                 _ = database_extent_binary[flag]
+                 
+                 database_extent_binary[flag][0] = set([])
+                 database_extent_binary[flag][1] = _[0].add(set([self._d3plot.arrays[ArrayType.element_beam_effective_plastic_strain],
+                                                                 self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain],
+                                                                 self._d3plot.arrays[ArrayType.element_solid_effective_plastic_strain],
+                                                                 self._d3plot.arrays[ArrayType.element_beam_stress],
+                                                                 self._d3plot.arrays[ArrayType.element_shell_stress],
+                                                                 self._d3plot.arrays[ArrayType.element_solid_stress]]
+                                                                 ))            
+                           
+             
+                 array_requirements[self._d3plot.arrays[ArrayType.element_beam_effective_plastic_strain]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_beam_effective_plastic_strain]]
+                 _["dependents"]     = ["beam_plastic_strain_tensor"]
+                 _["shape"]          = (1,n_beams)
+                 _["convert"]        = convert.beam_plastic_strain_tensor
+                 _["tracker"]        = beam_ids_tracker      
+                 
+                 array_requirements[self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain]]
+                 _["dependents"]     = ["shell_plastic_strain_tensor"]
+                 _["shape"]          = (1,n_shell)
+                 _["convert"]        = convert.shell_plastic_strain_tensor
+                 _["tracker"]        = shell_ids_tracker                   
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_solid_effective_plastic_strain]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_solid_effective_plastic_strain]]
+                 _["dependents"]     = ["solid_plastic_strain_tensor"]
+                 _["shape"]          = (1,n_solidl)
+                 _["convert"]        = convert.solid_plastic_strain_tensor
+                 _["tracker"]        = solid_ids_tracker              
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_beam_stress]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_beam_stress]]
+                 _["dependents"]     = ["beam_stress_tensor"]
+                 _["shape"]          = (1,n_beams, nip_beams, 3)
+                 _["convert"]        = convert.beam_stress_tensor
+                 _["tracker"]        = beam_ids_tracker      
+                 
+                 array_requirements[self._d3plot.arrays[ArrayType.element_shell_stress]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_shell_stress]]
+                 _["dependents"]     = ["shell_stress_tensor"]
+                 _["shape"]          = (1,n_shell, nip_shells, 4)
+                 _["convert"]        = convert.shell_stress_tensor
+                 _["tracker"]        = shell_ids_tracker                   
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_solid_stress]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_solid_stress]]
+                 _["dependents"]     = ["solid_stress_tensor"]
+                 _["shape"]          = (1,n_solid, nip_solids, 6)
+                 _["convert"]        = convert.solid_stress_tensor
+                 _["tracker"]        = solid_ids_tracker            
+                 
+            
+            ISTRA = False
+            if ISTRA:
+                 """
+                 Output flag for strain tensor:
+                 """
+                 
+                 flag = "ISTRA"
+                 
+                 database_extent_binary[flag] = {}      
+                 _ = database_extent_binary[flag]
+                 
+                 database_extent_binary[flag][0] = set([])
+                 database_extent_binary[flag][1] = _[0].add(set([self._d3plot.arrays[ArrayType.element_beam_strain],
+                                                                 self._d3plot.arrays[ArrayType.element_shell_strain],
+                                                                 self._d3plot.arrays[ArrayType.element_solid_strain]]
+                                                                 ))                                                   
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_beam_strain]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_beam_strain]]
+                 _["dependents"]     = ["beam_strain_tensor"]
+                 _["shape"]          = (1,n_beams, nip_beams, 3)
+                 _["convert"]        = convert.beam_strain_tensor
+                 _["tracker"]        = beam_ids_tracker      
+                 
+                 array_requirements[self._d3plot.arrays[ArrayType.element_shell_strain]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_shell_strain]]
+                 _["dependents"]     = ["shell_strain_tensor"]
+                 _["shape"]          = (1,n_shell, nip_shells, 4)
+                 _["convert"]        = convert.shell_strain_tensor
+                 _["tracker"]        = shell_ids_tracker                   
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_solid_strain]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_solid_strain]]
+                 _["dependents"]     = ["solid_strain_tensor"]
+                 _["shape"]          = (1,n_solid, nip_solid, 6)
+                 _["convert"]        = convert.solid_strain_tensor
+                 _["tracker"]        = solid_ids_tracker      
+                 
+            ISED = False 
+            if ISED:
+                 """
+                 Output flag for strain_energy_density:
+                 """
+                 
+                 flag = "ISED"
+                 
+                 database_extent_binary[flag] = {}      
+                 _ = database_extent_binary[flag]
+                 
+                 database_extent_binary[flag][0] = set([])
+                 database_extent_binary[flag][1] = _[0].add(set([self._d3plot.arrays[ArrayType.element_beam_strain_energy_density],
+                                                                 self._d3plot.arrays[ArrayType.element_shell_strain_energy_density],
+                                                                 self._d3plot.arrays[ArrayType.element_solid_strain_energy_density]]
+                                                                 ))                                                   
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_beam_strain_energy_density]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_beam_strain_energy_density]]
+                 _["dependents"]     = ["beam_strain_energy_density"]
+                 _["shape"]          = (1,n_beams)
+                 _["convert"]        = convert.beam_strain_energy_density
+                 _["tracker"]        = beam_ids_tracker      
+                 
+                 array_requirements[self._d3plot.arrays[ArrayType.element_shell_strain_energy_density]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_shell_strain_energy_density]]
+                 _["dependents"]     = ["shell_strain_energy_density"]
+                 _["shape"]          = (1,n_shell)
+                 _["convert"]        = convert.shell_strain_energy_density
+                 _["tracker"]        = shell_ids_tracker                   
+            
+                 array_requirements[self._d3plot.arrays[ArrayType.element_solid_strain_energy_density]] = {}
+                 _ = array_requirements[self._d3plot.arrays[ArrayType.element_solid_strain_energy_density]]
+                 _["dependents"]     = ["solid_strain_energy_density"]
+                 _["shape"]          = (1,n_solid)
+                 _["convert"]        = convert.solid_strain_energy_density
+                 _["tracker"]        = solid_ids_tracker                     
+            
+            STRFLG = False 
+            if STRFLG:            
+                """
+                Flag for output of strain tensors. STRFLG is interpreted digit-wise
+                STRFLG = [𝑁𝑀𝐿],
+                STRFLG = 𝐿 +𝑀 × 10 + 𝑁 × 100
+                L.EQ.1: Write strain tensor data to d3plot, elout, and dynain.
+                For shell and thick shell elements two tensors are written,
+                one at the innermost and one at the outermost integration
+                point. For solid elements a single strain
+                tensor is written.
+                M.EQ.1: Write plastic strain data to d3plot.
+                N.EQ.1: Write thermal strain data to d3plot.  
+                Examples. For STRFLG = 11 (011) LS-DYNA will write both strain
+                and plastic strain tensors, but no thermal strain tensors. Whereas
+                for STRFLG = 110, LS-DYNA will write plastic and thermal strain
+                tensors but no strain tensors. For more information and supported
+                elements and materials, see Remark 10.
+                """
+                # Skip this asume all will be created
+                None
+                
+            SIGFLG = False 
+            if STRFLG:   
+                """
+                Flag for including the stress tensor for shells and solids.
+                EQ.1: include (default),
+                EQ.2: exclude for shells, include for solids.
+                EQ.3: exclude for shells and solids.             
+                """
+                
+                # Skip this asume all will be created
+                None
+                
+                
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             
             rr = RadiossReader(file) 
             
@@ -144,8 +495,7 @@ class readAndConvert:
             if "node_velocity" in rr.arrays:  
                 node_velocity.append(rr.arrays["node_velocity"])
                
-            node_displacement.append(rr.arrays["node_coordinates"])
-            
+            node_displacement.append(rr.arrays["node_coordinates"])            
 
             "Beam Updates"    
             
