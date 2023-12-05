@@ -96,25 +96,31 @@ class readAndConvert:
         rr = RadiossReader(file_list[0]) 
         if rr.raw_header["nbFacets"] > 0:
             shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
+            element_shell_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
 
         if rr.raw_header["nbElts1D"] > 0:
             beam_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]))
+            element_beam_ids_out    =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]), beam_ids_tracker)
 
         if rr.raw_header["nbElts3D"] > 0:
             solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]))
+            element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
             
         original_node_coordinates = rr.arrays["node_coordinates"]       
-        
         node_ids_out = readAndConvert.sequential(rr.arrays["node_ids"])
-        element_shell_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
-        element_beam_ids_out    =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]), beam_ids_tracker)
-        element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
         
         del rr
         
         for ifile, file in enumerate(tqdm(file_list)):
             
+            rr = RadiossReader(file) 
+            
+            self._d3plot.arrays[ArrayType.node_coordinates]               = original_node_coordinates                        
+            self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out
+            
             if True:
+                
+                
                 database_extent_binary ={}
                 array_requirements = {}
                 
@@ -178,7 +184,7 @@ class readAndConvert:
                     _["convert"]        = convert.rigid_body_velocity
                     _["tracker"]        = None                       
                
-                IXYZ = False
+                IXYZ = True
                 
                 if IXYZ:
                     """
@@ -188,19 +194,19 @@ class readAndConvert:
                     database_extent_binary["IXYZ"]      = {}            
                     _                                   = database_extent_binary["IXYZ"]
                     database_extent_binary["IXYZ"][0]   = []
-                    database_extent_binary["IXYZ"][1]   = _[0].extend([ArrayType.node_displacement
-                                                                       ])            
+                    database_extent_binary["IXYZ"][1]   = _[0] + [ArrayType.node_displacement
+                                                                       ]            
                 
                     array_requirements[ArrayType.node_displacement] = {}
                     _ = array_requirements[ArrayType.node_displacement]
                     
                     _["dependents"]     = ["node_coordinates"]
-                    _["shape"]          = (1,n_nodes)
+                    _["shape"]          = (rr.raw_header["nbNodes"],3)
                     _["convert"]        = None
                     _["tracker"]        = None
                     
                 
-                IVEL = False
+                IVEL = True
                 
                 if IVEL:
                     """
@@ -213,18 +219,18 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][0] = []
-                    database_extent_binary[flag][1] = _[0].extend([ArrayType.node_velocity
-                                                                   ])            
+                    database_extent_binary[flag][1] = _[0] + [ArrayType.node_velocity
+                                                                   ]           
                 
                     array_requirements[ArrayType.node_velocity] = {}
                     _ = array_requirements[ArrayType.node_velocity]
                     _["dependents"]     = ["node_velocity"]
-                    _["shape"]          = (1,n_nodes)
+                    _["shape"]          = (rr.raw_header["nbNodes"],3)
                     _["convert"]        = None
                     _["tracker"]        = None         
                     
                
-                IACC = False 
+                IACC = True 
                 if IACC:
                      """
                      Output flag for nodal acceleration
@@ -236,13 +242,13 @@ class readAndConvert:
                      _ = database_extent_binary[flag]
                      
                      database_extent_binary[flag][0] = []
-                     database_extent_binary[flag][1] = _[0].extend([ArrayType.node_acceleration
-                                                                    ])            
+                     database_extent_binary[flag][1] = _[0] + [ArrayType.node_acceleration
+                                                                    ]          
                  
                      array_requirements[ArrayType.node_acceleration] = {}
                      _ = array_requirements[ArrayType.node_acceleration]
                      _["dependents"]     = ["node_acceleration"]
-                     _["shape"]          = (1,n_nodes)
+                     _["shape"]          = (rr.raw_header["nbNodes"],3)
                      _["convert"]        = None
                      _["tracker"]        = None        
                      
@@ -267,13 +273,12 @@ class readAndConvert:
                      _ = database_extent_binary[flag]
                      
                      database_extent_binary[flag][0] = []
-                     database_extent_binary[flag][1] = _[0].extend([    ArrayType.element_beam_effective_plastic_strain,
+                     database_extent_binary[flag][1] = _[0] +      [    ArrayType.element_beam_effective_plastic_strain,
                                                                         ArrayType.element_shell_effective_plastic_strain,
                                                                         ArrayType.element_solid_effective_plastic_strain,
                                                                         ArrayType.element_beam_stress,
                                                                         ArrayType.element_shell_stress,
-                                                                        ArrayType.element_solid_stress]
-                                                                        )           
+                                                                        ArrayType.element_solid_stress]          
                                
                  
                      array_requirements[ArrayType.element_beam_effective_plastic_strain] = {}
@@ -331,10 +336,10 @@ class readAndConvert:
                      _ = database_extent_binary[flag]
                      
                      database_extent_binary[flag][0] = []
-                     database_extent_binary[flag][1] = _[0].extend([    ArrayType.element_beam_strain,
+                     database_extent_binary[flag][1] = _[0] +      [    ArrayType.element_beam_strain,
                                                                         ArrayType.element_shell_strain,
                                                                         ArrayType.element_solid_strain
-                                                                        ])
+                                                                        ]
                 
                      array_requirements[ArrayType.element_beam_strain] = {}
                      _ = array_requirements[ArrayType.element_beam_strain]
@@ -369,10 +374,10 @@ class readAndConvert:
                      _ = database_extent_binary[flag]
                      
                      database_extent_binary[flag][0] = []
-                     database_extent_binary[flag][1] = _[0].extend([    ArrayType.element_beam_strain_energy_density,
+                     database_extent_binary[flag][1] = _[0]        [    ArrayType.element_beam_strain_energy_density,
                                                                         ArrayType.element_shell_strain_energy_density,
                                                                         ArrayType.element_solid_strain_energy_density
-                                                                        ])                                                   
+                                                                        ]                                                
                 
                      array_requirements[ArrayType.element_beam_strain_energy_density] = {}
                      _ = array_requirements[ArrayType.element_beam_strain_energy_density]
@@ -653,8 +658,8 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][1] = []
-                    database_extent_binary[flag][2] = _[1].extend([ArrayType.element_shell_hourglass_energy_density
-                                                                   ])            
+                    database_extent_binary[flag][2] = _[1] +      [ArrayType.element_shell_hourglass_energy_density
+                                                                   ]
                                               
                     # Check the units here I *think* Dyna is energy per unit volume whereas Radioss is energy per unit mass
                     array_requirements[ArrayType.element_shell_hourglass_energy_density] = {}
@@ -684,11 +689,11 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][1] = []
-                    database_extent_binary[flag][2] = _[1].extend([ ArrayType.element_shell_timestep_size
-                                                                    ])            
-                    database_extent_binary[flag][3] = _[2].extend([ ArrayType.element_shell_mass, 
-                                                                    ArrayType.element_shell_added_mass
-                                                                    ])   
+                    database_extent_binary[flag][2] = _[1] + [ ArrayType.element_shell_timestep_size
+                                                                    ]            
+                    database_extent_binary[flag][3] = _[2] + [ ArrayType.element_shell_mass, 
+                                                                    ArrayType.element_shell_added_mass]
+                                                                       
                                               
                     array_requirements[ArrayType.element_shell_timestep_size] = {}
                     _ = array_requirements[ArrayType.element_shell_timestep_size]
@@ -786,9 +791,9 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][0] = []
-                    database_extent_binary[flag][1] = _[0].extend([ ArrayType.contact_peak_pressures,
+                    database_extent_binary[flag][1] = _[0] + [ ArrayType.contact_peak_pressures,
                                                                     ArrayType.contact_surface_energy
-                                                                    ])            
+                                                                    ]            
                                           
                     array_requirements[ArrayType.contact_peak_pressures] = {}
                     _ = array_requirements[ArrayType.contact_peak_pressures]
@@ -839,24 +844,24 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][0] = []
-                    database_extent_binary[flag][1] = _[0].extend([ArrayType.element_shell_internal_energy_density,
+                    database_extent_binary[flag][1] = _[0] +      [ArrayType.element_shell_internal_energy_density,
                                                                    ArrayType.element_shell_volume,
                                                                    ArrayType.element_shell_bulk_viscocity_pressure,
                                                                    ArrayType.element_solid_internal_energy_density,
                                                                    ArrayType.element_solid_volume,
                                                                    ArrayType.element_solid_bulk_viscocity_pressure                                                                                                                              
-                                                                   ])  
-                    database_extent_binary[flag][2] = _[1].extend([ArrayType.element_shell_relative_volume,
+                                                                   ]
+                    database_extent_binary[flag][2] = _[1] +      [ArrayType.element_shell_relative_volume,
                                                                    ArrayType.element_shell_density,
                                                                    ArrayType.element_solid_relative_volume,
                                                                    ArrayType.element_solid_density                                                                                                                            
-                                                                   ])   
+                                                                   ]  
     
-                    database_extent_binary[flag][4] = _[2].extend([ArrayType.element_shell_volumetric_strain,
+                    database_extent_binary[flag][4] = _[2] +      [ArrayType.element_shell_volumetric_strain,
                                                                    ArrayType.element_shell_hourglass_energy_per_initial_volume,
                                                                    ArrayType.element_solid_volumetric_strain,
                                                                    ArrayType.element_solid_hourglass_energy_per_initial_volume,                                                                                                                           
-                                                                   ])                
+                                                                   ]                
                     
                                           
                     array_requirements[ArrayType.element_shell_internal_energy_density] = {}
@@ -974,10 +979,10 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][0] = []
-                    database_extent_binary[flag][1] = _[0].extend([ArrayType.nodal_mass
-                                                                   ])            
-                    database_extent_binary[flag][2] = _[1].extend([ArrayType.percentage_increase_nodal_mass
-                                                                   ]) 
+                    database_extent_binary[flag][1] = _[0] +      [ArrayType.nodal_mass
+                                                                   ]     
+                    database_extent_binary[flag][2] = _[1] +      [ArrayType.percentage_increase_nodal_mass
+                                                                   ] 
                               
                 
                     array_requirements[ArrayType.nodal_mass] = {}
@@ -1015,15 +1020,15 @@ class readAndConvert:
                     _ = database_extent_binary[flag]
                     
                     database_extent_binary[flag][0] = []
-                    database_extent_binary[flag][1] = _[0].extend([ ArrayType.element_shell_temperature,
+                    database_extent_binary[flag][1] = _[0] +      [ ArrayType.element_shell_temperature,
                                                                     ArrayType.element_solid_temperature
-                                                                    ])            
-                    database_extent_binary[flag][2] = _[1].extend([ ArrayType.element_shell_flux,
+                                                                    ]          
+                    database_extent_binary[flag][2] = _[1] +       [ArrayType.element_shell_flux,
                                                                     ArrayType.element_solid_flux
-                                                                    ])
-                    database_extent_binary[flag][3] = _[2].extend([ ArrayType.element_shell_top_bottom_temperature,
+                                                                    ]
+                    database_extent_binary[flag][3] = _[2] +      [ ArrayType.element_shell_top_bottom_temperature,
                                                                     ArrayType.element_solid_top_bottom_temperature
-                                                                    ])    
+                                                                    ]
                                                                   
                     array_requirements[ArrayType.element_shell_temperature] = {}
                     _ = array_requirements[ArrayType.element_shell_temperature]
@@ -1162,7 +1167,7 @@ class readAndConvert:
                     # Leave this for now                 
             
 
-            rr = RadiossReader(file) 
+            
             
             node_acceleration               = []
             node_velocity                   = []
@@ -1289,19 +1294,58 @@ class readAndConvert:
             timesteps.append(rr.arrays["timesteps"])
         
             "Assign the arrays to the D3PLOT class for writing"
+                        
+            "Generate the availability check"
             
-            "Nodes"
-            self._d3plot.arrays[ArrayType.node_displacement]              = np.array(node_displacement)
-            self._d3plot.arrays[ArrayType.node_coordinates]               = original_node_coordinates                        
+            dependency_check = {}
+            flag_max        =  {}
+            for flag in database_extent_binary:
+                flag_max[flag] = -float('inf')
+                _ = database_extent_binary[flag]
+                for array_group in _:
+                    __ = _[array_group]
+                    for array_output in __:
+                        # Check all dependencies exist
+                        all_dependents_exist = True
+                        ___ = array_requirements[array_output]["dependents"]
+                        for check_dependent in ___:
+                            if check_dependent not in rr.arrays:
+                                all_dependents_exist = False
+                                break
+                    
+                        dependency_check[array_output] = all_dependents_exist
+                        if all_dependents_exist:
+                            flag_max[flag] = max(flag_max[flag],array_group) 
             
+            "Generate the output arrays"
             
-            self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out
-    
-            if "node_acceleration" in rr.arrays: 
-                self._d3plot.arrays[ArrayType.node_acceleration]              = np.array(node_acceleration)
-            if "node_velocity" in rr.arrays: 
-                self._d3plot.arrays[ArrayType.node_velocity]                  = np.array(node_velocity)
+            dependency_check["IACC"] = False
             
+            for flag in database_extent_binary:
+                _ = database_extent_binary[flag]
+                for array_group in _:
+                    __ = _[array_group]
+                    
+                    if array_group <= flag_max[flag]:
+                        for array_output in __:
+                            if dependency_check[array_output]:
+                                conversion_function = array_requirements[array_output]["convert"]
+                                tracker             = array_requirements[array_output]["tracker"]
+                                if conversion_function:
+                                    conversion_inputs = [rr.arrays[i] for i in array_requirements[array_output]["dependents"]]
+                                    if tracker:
+                                        self._d3plot.arrays[array_output] = readAndConvert.apply_sorter(readAndConvert.sequential(conversion_function(*conversion_inputs)), tracker)[np.newaxis, :]
+                                    else:
+                                        self._d3plot.arrays[array_output] = conversion_function(*conversion_inputs)[np.newaxis, :]
+                                else:
+                                    if tracker:
+                                        self._d3plot.arrays[array_output] = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays[array_requirements[array_output]["dependents"][0]]), tracker)[np.newaxis, :]
+                                    else:
+                                        y = rr.arrays[array_requirements[array_output]["dependents"][0]][np.newaxis, :]
+                                        self._d3plot.arrays[array_output] = rr.arrays[array_requirements[array_output]["dependents"][0]][np.newaxis, :]
+                            else:
+                                self._d3plot.arrays[array_output] = np.zeros(array_requirements[array_output]["shape"])[np.newaxis, :]
+                            
             "Shells"    
             if rr.raw_header["nbFacets"] > 0:
                 self._d3plot.arrays[ArrayType.element_shell_ids]              = element_shell_ids_out
@@ -1468,6 +1512,6 @@ class readAndConvert:
 
 if __name__ == '__main__':        
     
-    file_stem = "O:/model"
+    file_stem = "O:/Kerb_strike_front/test18/Header_Kerb_Strike_Front_A001a"
 
     a2d = readAndConvert(file_stem)
