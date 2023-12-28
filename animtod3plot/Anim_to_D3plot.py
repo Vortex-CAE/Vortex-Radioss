@@ -4,10 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from Vortex_Radioss.lasso.dyna.d3plot import D3plot
-from Vortex_Radioss.lasso.dyna.array_type import ArrayType
-from Vortex_Radioss.animtod3plot.RadiossTHReader import RadiossTHReader
-from Vortex_Radioss.animtod3plot.RadiossReader import RadiossReader
+from lasso.dyna.d3plot import D3plot
+from lasso.dyna.array_type import ArrayType
+#from .RadiossTHReader import RadiossTHReader
+import RadiossReader
 
 import numpy as np
 import os
@@ -15,6 +15,67 @@ import time
 import math
 from tqdm import tqdm
 import glob
+
+#########################################
+# New part
+#########################################
+class convert:
+    @staticmethod
+    def global_internal_energy(*data):
+        # conversion logic for global_internal_energy
+        return data
+
+    @staticmethod
+    def part_internal_energy(*data):
+        # conversion logic for part_internal_energy
+        return data
+
+    @staticmethod
+    def global_kinetic_energy(*data):
+        # conversion logic for global_kinetic_energy
+        return data
+
+    @staticmethod
+    def part_kinetic_energy(*data):
+        # conversion logic for part_kinetic_energy
+        return data
+
+    @staticmethod
+    def rigid_body_velocity(*data):
+        # conversion logic for rigid_body_velocity
+        return data
+    
+    @staticmethod
+    def sum2Scalars(*data):
+        # sum of 2 scalar results
+        half_size = len(data) // 2
+        data1 = data[:half_size]
+        data2 = data[half_size:]
+        print(data1)
+        print(data2)
+        return sum(data1) + sum(data2)
+    
+    @staticmethod
+    def element_shell_stress(*data):
+            
+        #print(data)
+
+        #data1[:, 0, 0] = data[0][:, 0]
+        #data1[:, 0, 1] = data[0][:, 1]
+        #data1[:, 0, 2] = np.zeros(shape=(rr.raw_header["nbFacets"]))
+        #data1[:, 0, 3] = data[0][:, 2]
+        #data1[:, 0, 5] = np.zeros(shape=(rr.raw_header["nbFacets"]))    
+            
+            
+        #data1[:, 1, 0] = data[1][:, 0]
+        #data1[:, 1, 1] = data[1][:, 1]
+        #data1[:, 1, 2] = np.zeros(shape=(rr.raw_header["nbFacets"]))
+        #data1[:, 1, 3] = data[1][:, 2]
+        #data1[:, 1, 5] = np.zeros(shape=(rr.raw_header["nbFacets"]))  
+             
+        return data
+                
+#########################################
 
 
 class readAndConvert:
@@ -93,7 +154,20 @@ class readAndConvert:
         
                
         print("Re-sorting the indexes")
-        rr = RadiossReader(file_list[0]) 
+        rr = RadiossReader.RadiossReader(file_list[0]) 
+
+        
+        n_parts = rr.raw_header["nbParts"]
+        n_nodes = rr.raw_header["nbNodes"]
+        n_beams = rr.raw_header["nbElts1D"]
+        n_shell = rr.raw_header["nbFacets"]
+        n_solid = rr.raw_header["nbElts3D"]
+        #n_contact = rr.raw_header["nbContact"]
+        #n_rigid_body = rr.raw_header["nbRigidBodies"]
+        #nip_beams = rr.raw_header["nbIPBeam"]
+        #nip_shell = rr.raw_header["nbIPShell"]
+        #nip_solid = rr.raw_header["nbIPSolid"]
+
         if rr.raw_header["nbFacets"] > 0:
             shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
             element_shell_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
@@ -106,6 +180,11 @@ class readAndConvert:
             solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]))
             element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
             
+        if rr.raw_header["nbNodes"] > 0:
+            node_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["node_ids"]))
+            element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["node_ids"]), node_ids_tracker)
+
+            
         original_node_coordinates = rr.arrays["node_coordinates"]       
         node_ids_out = readAndConvert.sequential(rr.arrays["node_ids"])
         
@@ -113,12 +192,12 @@ class readAndConvert:
         
         for ifile, file in enumerate(tqdm(file_list)):
             
-            rr = RadiossReader(file) 
+            rr = RadiossReader.RadiossReader(file) 
             
             self._d3plot.arrays[ArrayType.node_coordinates]               = original_node_coordinates                        
             self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out
             
-            if True:
+            if False:
                 
                 
                 database_extent_binary ={}
@@ -284,7 +363,7 @@ class readAndConvert:
                      array_requirements[ArrayType.element_beam_effective_plastic_strain] = {}
                      _ = array_requirements[ArrayType.element_beam_effective_plastic_strain]
                      _["dependents"]     = ["beam_plastic_strain_tensor"]
-                     _["shape"]          = (1,n_beams, nip_beams)
+                     _["shape"]          = (1,n_beams, nip_beam)
                      _["convert"]        = convert.beam_plastic_strain_tensor
                      _["tracker"]        = beam_ids_tracker      
                      
@@ -800,14 +879,14 @@ class readAndConvert:
                     _["dependents"]     = ["contact_peak_pressures"]
                     _["shape"]          = (1,n_contact)
                     _["convert"]        = convert.element_shell_contact_peak_pressures
-                    _["tracker"]        = contact_ids_tracker    
+                    _["tracker"]        = contact_ids_tracker
                     
                     array_requirements[ArrayType.contact_surface_energy] = {}
                     _ = array_requirements[ArrayType.contact_surface_energy]
                     _["dependents"]     = ["contact_surface_energy"]
                     _["shape"]          = (1,n_contact)
                     _["convert"]        = convert.element_shell_contact_surface_energy
-                    _["tracker"]        = contact_ids_tracker                  
+                    _["tracker"]        = contact_ids_tracker 
                     
                 SCLP = False 
                 if SCLP:                 
@@ -990,14 +1069,14 @@ class readAndConvert:
                     _["dependents"]     = ["nodal_mass"]
                     _["shape"]          = (1,n_nodes)
                     _["convert"]        = convert.nodal_mass
-                    _["tracker"]        = nodes_ids_tracker    
+                    _["tracker"]        = nodes_ids_tracker           
                     
                     array_requirements[ArrayType.percentage_increase_nodal_mass] = {}
                     _ = array_requirements[ArrayType.percentage_increase_nodal_mass]
                     _["dependents"]     = ["percentage_increase_nodal_mass"]
                     _["shape"]          = (1,n_nodes)
                     _["convert"]        = convert.percentage_increase_nodal_mass
-                    _["tracker"]        = nodes_ids_tracker              
+                    _["tracker"]        = nodes_ids_tracker      
                 
                 THERM = False 
                 if THERM:
@@ -1167,6 +1246,79 @@ class readAndConvert:
                     # Leave this for now                 
             
 
+
+            element_shell_output = [] 
+            if "nbEFunc" in rr.raw_header:        
+                for iefun in range(0, rr.raw_header["nbEFunc"]):
+                    #print(str(rr.raw_arrays["fTextA"][iefun]))
+                    element_shell_output.append( "element_shell_" + str(rr.raw_arrays["fTextA"][iefun + rr.raw_header["nbFunc"]]).lower().replace(" ", "_").strip())
+
+            element_shell_tens_output = [] 
+            if "nbTens" in rr.raw_header:        
+                for iefun in range(0, rr.raw_header["nbTens"]):
+                    #print(str(rr.raw_arrays["tTextA"][iefun]))
+                    element_shell_tens_output.append( "element_shell_" + str(rr.raw_arrays["tTextA"][iefun]).lower().replace(" ", "_").strip())
+
+#########################################
+# New part
+#########################################
+            if True:
+                
+                database_extent_binary ={}
+                array_requirements = {}
+
+                flag = "SHELLS"
+                
+                if rr.raw_header["nbEFunc"] > 0:   
+                    
+                    database_extent_binary[flag] = {}      
+                    _ = database_extent_binary[flag]
+                    
+                    database_extent_binary[flag][0] = []
+                    database_extent_binary[flag][1] = _[0] + [ArrayType.element_shell_is_alive]  
+                    database_extent_binary[flag][2] = _[1] + [ArrayType.element_shell_thickness]        
+                    database_extent_binary[flag][3] = _[2] + [ArrayType.element_shell_internal_energy]    
+                    #database_extent_binary[flag][4] = _[3] + [ArrayType.element_shell_stress]    
+                    
+                    
+                    # Dyna output
+                    array_requirements[ArrayType.element_shell_thickness] = {}
+                    _ = array_requirements[ArrayType.element_shell_thickness]
+                    # Radioss outputs needed to compute Dyna output
+                    _["dependents"]     = ["element_shell_thickness"]
+                    _["shape"]          = (1,n_shell)
+                    _["convert"]        = None
+                    _["tracker"]        = shell_ids_tracker
+                    
+                    # Dyna output
+                    array_requirements[ArrayType.element_shell_is_alive] = {}
+                    _ = array_requirements[ArrayType.element_shell_is_alive]
+                    # Radioss outputs needed to compute Dyna output
+                    _["dependents"]     = ["element_shell_is_alive"]
+                    _["shape"]          = (1,n_shell)
+                    _["convert"]        = None
+                    _["tracker"]        = shell_ids_tracker
+                    
+                    # Dyna output
+                    array_requirements[ArrayType.element_shell_internal_energy] = {}
+                    _ = array_requirements[ArrayType.element_shell_internal_energy]
+                    # Radioss outputs needed to compute Dyna output
+                    _["dependents"]     = ["element_shell_specific_energy"]
+                    _["shape"]          = (1,n_shell)
+                    _["convert"]        = None
+                    _["tracker"]        = shell_ids_tracker
+                    
+                   # Dyna output
+                    #array_requirements[ArrayType.element_shell_stress] = {}
+                    #_ = array_requirements[ArrayType.element_shell_stress]
+                    ## Radioss outputs needed to comptute Dyna output
+                    ##_["dependents"]     = ["element_shell_stress_(upper)","element_shell_stress_(lower)"]
+                    #_["dependents"]     = ["Stress (upper)","Stress (lower)"]
+                    #_["shape"]          = (1,n_shell, 1, 4)
+                    #_["convert"]        = convert.element_shell_stress
+                    #_["tracker"]        = shell_ids_tracker
+#########################################
+
             
             
             node_acceleration               = []
@@ -1206,51 +1358,42 @@ class readAndConvert:
             
             "shell updates"
 
-            if rr.raw_header["nbFacets"] > 0 and "element_shell_is_alive" in rr.arrays:
-                element_shell_is_alive.append(readAndConvert.apply_sorter(rr.arrays["element_shell_is_alive"], shell_ids_tracker).astype("<f"))
+            #if rr.raw_header["nbFacets"] > 0 and "element_shell_is_alive" in rr.arrays:
+                #element_shell_is_alive.append(readAndConvert.apply_sorter(rr.arrays["element_shell_is_alive"], shell_ids_tracker).astype("<f"))
 
-            element_shell_output = [] 
-            if "nbEFunc" in rr.raw_header:        
-                for iefun in range(0, rr.raw_header["nbEFunc"]):
-                    element_shell_output.append( "element_shell_" + str(rr.raw_arrays["fTextA"][iefun + rr.raw_header["nbFunc"]]).lower().replace(" ", "_").strip())
 
             #print(element_shell_output)
             
-            if "element_shell_thickness" in element_shell_output:
-                element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["element_shell_thickness"], shell_ids_tracker))
+            #if "element_shell_thickness" in element_shell_output:
+                #element_shell_thickness.append(readAndConvert.apply_sorter(rr.arrays["element_shell_thickness"], shell_ids_tracker))
 
-            if "element_shell_specific_energy" in element_shell_output:
-                element_shell_specific_energy.append(readAndConvert.apply_sorter(rr.arrays["element_shell_specific_energy"], shell_ids_tracker))
+            #if "element_shell_specific_energy" in element_shell_output:
+                #element_shell_specific_energy.append(readAndConvert.apply_sorter(rr.arrays["element_shell_specific_energy"], shell_ids_tracker))
 
-            if "element_shell_plastic_strain" in element_shell_output:
-                element_shell_plastic_strain.append(readAndConvert.apply_sorter(rr.arrays["element_shell_plastic_strain"], shell_ids_tracker))
+            #if "element_shell_plastic_strain" in element_shell_output:
+                #element_shell_plastic_strain.append(readAndConvert.apply_sorter(rr.arrays["element_shell_plastic_strain"], shell_ids_tracker))
 
-            element_shell_tens_output = [] 
-            if "nbTens" in rr.raw_header:        
-                for iefun in range(0, rr.raw_header["nbTens"]):
-                    element_shell_tens_output.append( "element_shell_" + str(rr.raw_arrays["tTextA"][iefun]).lower().replace(" ", "_").strip())
-                    
             #print(element_shell_tens_output)
 
-            if "Stress (upper)" in rr.arrays or "Stress (lower)" in rr.arrays :   
-                _element_shell_stress = np.zeros(shape=(rr.raw_header["nbFacets"], 2, 6))
+            #if "Stress (upper)" in rr.arrays or "Stress (lower)" in rr.arrays :   
+                #_element_shell_stress = np.zeros(shape=(rr.raw_header["nbFacets"], 2, 6))
                     
-                if "Stress (upper)" in rr.arrays:
-                    _element_shell_stress[:, 0, 0] = rr.arrays["Stress (upper)"][:, 0]
-                    _element_shell_stress[:, 0, 1] = rr.arrays["Stress (upper)"][:, 1]
-                    _element_shell_stress[:, 0, 2] = np.zeros(shape=(rr.raw_header["nbFacets"]))
-                    _element_shell_stress[:, 0, 3] = rr.arrays["Stress (upper)"][:, 2]
-                    _element_shell_stress[:, 0, 5] = np.zeros(shape=(rr.raw_header["nbFacets"]))    
+                #if "Stress (upper)" in rr.arrays:
+                    #_element_shell_stress[:, 0, 0] = rr.arrays["Stress (upper)"][:, 0]
+                    #_element_shell_stress[:, 0, 1] = rr.arrays["Stress (upper)"][:, 1]
+                    #_element_shell_stress[:, 0, 2] = np.zeros(shape=(rr.raw_header["nbFacets"]))
+                    #_element_shell_stress[:, 0, 3] = rr.arrays["Stress (upper)"][:, 2]
+                    #_element_shell_stress[:, 0, 5] = np.zeros(shape=(rr.raw_header["nbFacets"]))    
             
-                if "Stress (lower)" in rr.arrays:
-                    _element_shell_stress[:, 1, 0] = rr.arrays["Stress (lower)"][:, 0]
-                    _element_shell_stress[:, 1, 1] = rr.arrays["Stress (lower)"][:, 1]
-                    _element_shell_stress[:, 1, 2] = np.zeros(shape=(rr.raw_header["nbFacets"]))
-                    _element_shell_stress[:, 1, 3] = rr.arrays["Stress (lower)"][:, 2]
-                    _element_shell_stress[:, 1, 5] = np.zeros(shape=(rr.raw_header["nbFacets"]))  
+                #if "Stress (lower)" in rr.arrays:
+                    #_element_shell_stress[:, 1, 0] = rr.arrays["Stress (lower)"][:, 0]
+                    #_element_shell_stress[:, 1, 1] = rr.arrays["Stress (lower)"][:, 1]
+                    #_element_shell_stress[:, 1, 2] = np.zeros(shape=(rr.raw_header["nbFacets"]))
+                    #_element_shell_stress[:, 1, 3] = rr.arrays["Stress (lower)"][:, 2]
+                    #_element_shell_stress[:, 1, 5] = np.zeros(shape=(rr.raw_header["nbFacets"]))  
                     
-                if "Stress (upper)" in rr.arrays or "Stress (lower)" in rr.arrays :   
-                    element_shell_stress.append(readAndConvert.apply_sorter(_element_shell_stress, shell_ids_tracker))
+                #if "Stress (upper)" in rr.arrays or "Stress (lower)" in rr.arrays :   
+                    #element_shell_stress.append(readAndConvert.apply_sorter(_element_shell_stress, shell_ids_tracker))
         
 
             "Solid Updates"
@@ -1299,6 +1442,9 @@ class readAndConvert:
             
             dependency_check = {}
             flag_max        =  {}
+
+            #print(rr.arrays)
+
             for flag in database_extent_binary:
                 flag_max[flag] = -float('inf')
                 _ = database_extent_binary[flag]
@@ -1308,6 +1454,7 @@ class readAndConvert:
                         # Check all dependencies exist
                         all_dependents_exist = True
                         ___ = array_requirements[array_output]["dependents"]
+                        #print(___)
                         for check_dependent in ___:
                             if check_dependent not in rr.arrays:
                                 all_dependents_exist = False
@@ -1328,30 +1475,30 @@ class readAndConvert:
                     
                     if array_group <= flag_max[flag]:
                         for array_output in __:
+                            #print(array_output)
+                            #print(dependency_check[array_output])
                             if dependency_check[array_output]:
                                 conversion_function = array_requirements[array_output]["convert"]
                                 tracker             = array_requirements[array_output]["tracker"]
                                 if conversion_function:
                                     conversion_inputs = [rr.arrays[i] for i in array_requirements[array_output]["dependents"]]
-                                    if tracker:
+                                    if tracker.any():
                                         self._d3plot.arrays[array_output] = readAndConvert.apply_sorter(readAndConvert.sequential(conversion_function(*conversion_inputs)), tracker)[np.newaxis, :]
                                     else:
                                         self._d3plot.arrays[array_output] = conversion_function(*conversion_inputs)[np.newaxis, :]
                                 else:
-                                    if tracker:
+                                    if tracker.any():
                                         self._d3plot.arrays[array_output] = readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays[array_requirements[array_output]["dependents"][0]]), tracker)[np.newaxis, :]
                                     else:
                                         y = rr.arrays[array_requirements[array_output]["dependents"][0]][np.newaxis, :]
                                         self._d3plot.arrays[array_output] = rr.arrays[array_requirements[array_output]["dependents"][0]][np.newaxis, :]
-                            else:
-                                self._d3plot.arrays[array_output] = np.zeros(array_requirements[array_output]["shape"])[np.newaxis, :]
                             
             "Shells"    
             if rr.raw_header["nbFacets"] > 0:
                 self._d3plot.arrays[ArrayType.element_shell_ids]              = element_shell_ids_out
                 self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker)
                 self._d3plot.arrays[ArrayType.element_shell_part_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
-                self._d3plot.arrays[ArrayType.element_shell_is_alive]         = np.array(element_shell_is_alive)
+                #self._d3plot.arrays[ArrayType.element_shell_is_alive]         = np.array(element_shell_is_alive)
                 
             v=np.array(rr.raw_arrays["pTextA"])
             
@@ -1361,11 +1508,11 @@ class readAndConvert:
             shell_num = rr.raw_header["nbFacets"]
             shell_part_num = len(shell_part_ids)
             
-            if element_shell_thickness != []:
-                self._d3plot.arrays[ArrayType.element_shell_thickness]        = np.array(element_shell_thickness)
+            #if element_shell_thickness != []:
+                #self._d3plot.arrays[ArrayType.element_shell_thickness]        = np.array(element_shell_thickness)
     
-            if element_shell_specific_energy != []:
-                self._d3plot.arrays[ArrayType.element_shell_internal_energy]  = np.array(element_shell_specific_energy)
+            #if element_shell_specific_energy != []:
+                #self._d3plot.arrays[ArrayType.element_shell_internal_energy]  = np.array(element_shell_specific_energy)
     
             #if element_shell_plastic_strain != []:
             #    print("element_shell_plastic_strain != []")
@@ -1387,8 +1534,8 @@ class readAndConvert:
                 #self._d3plot.arrays[ArrayType.element_shell_effective_plastic_strain] = np.zeros(shape=(states, rr.raw_header["nbFacets"], 2))
             
             
-            if element_shell_stress != []:   
-                self._d3plot.arrays[ArrayType.element_shell_stress]           = np.array(element_shell_stress)
+            #if element_shell_stress != []:   
+                #self._d3plot.arrays[ArrayType.element_shell_stress]           = np.array(element_shell_stress)
             
             "Beams"
             
@@ -1510,8 +1657,9 @@ class readAndConvert:
         return True
         
 
-if __name__ == '__main__':        
-    
-    file_stem = "O:/Kerb_strike_front/test18/Header_Kerb_Strike_Front_A001a"
-
+if __name__ == '__main__':   
+             
+    #file_stem = "O:/Kerb_strike_front/test18/Header_Kerb_Strike_Front_A001a"
+    file_stem = "/home/svilleneuve/TEST/bumper_radioss/Bumper_Beam/Bumper_Beam_AP_meshed"
+   
     a2d = readAndConvert(file_stem)

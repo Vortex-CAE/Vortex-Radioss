@@ -8,8 +8,8 @@ from typing import Union
 import numpy as np
 import rich
 
-from Vortex_Radioss.lasso.io.binary_buffer import BinaryBuffer
-from Vortex_Radioss.lasso.logging import get_logger
+from lasso.io.binary_buffer import BinaryBuffer
+from lasso.logging import get_logger
 
 from .RadiossReader import RadiossReader
 
