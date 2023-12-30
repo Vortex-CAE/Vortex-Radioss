@@ -8,10 +8,10 @@ from typing import Union
 import numpy as np
 import rich
 
-import vortex_lasso
+import lasso
 
-from Vortex_Radioss.lasso.io.binary_buffer import BinaryBuffer
-from Vortex_Radioss.lasso.logging import get_logger
+from lasso.io.binary_buffer import BinaryBuffer
+from lasso.logging import get_logger
 
 LOGGER = get_logger(__file__)
 
@@ -842,7 +842,7 @@ class RadiossReader:
         # Unpack 1D element part indexes
 
         if "defPart1DA" in self.raw_arrays:        
-            if self.raw_arrays["defPart1DA"] != []:
+            if self.raw_arrays["defPart1DA"].any():
                 start=0
                 tmp_list_i=np.empty(self.raw_arrays["defPart1DA"][-1], int)
                 tmp_list_n=np.empty(self.raw_arrays["defPart1DA"][-1], str)
@@ -865,7 +865,7 @@ class RadiossReader:
         # Unpack 2D element part indexes       
 
         if self.raw_header["nbParts"] > 0 and "defPartA" in self.raw_arrays:        
-            if self.raw_arrays["defPartA"] != []:
+            if self.raw_arrays["defPartA"].any():
                 start=0
                 tmp_list_i=np.empty(self.raw_arrays["defPartA"][-1], int)
                 tmp_list_n=np.empty(self.raw_arrays["defPartA"][-1], str)
@@ -886,7 +886,7 @@ class RadiossReader:
         
         # Unpack solid element part indexes
         if "defPart3DA" in self.raw_arrays:  
-            if self.raw_arrays["defPart3DA"] != []:
+            if self.raw_arrays["defPart3DA"].any():
                 start=0
                 tmp_list_i=np.empty(self.raw_arrays["defPart3DA"][-1], int)
                 tmp_list_n=np.empty(self.raw_arrays["defPart3DA"][-1], str)
