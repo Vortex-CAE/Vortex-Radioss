@@ -143,11 +143,8 @@ class readAndConvert:
             return True
 
         file_list = glob.glob(file_stem + "A*[0-9]")
+        file_list.sort()
         
-        shell_output = {}
-        shell_output["element_shell_thickness"] = "element_shell_thickness"
-        shell_output["element_shell_specific_energy"] = "element_shell_internal_energy"
-
         original_node_coordinates       = None
         
                
@@ -178,11 +175,7 @@ class readAndConvert:
             solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]))
             element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
             
-        #if rr.raw_header["nbNodes"] > 0:
-        #    node_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["node_ids"]))
-        #    element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["node_ids"]), node_ids_tracker)
 
-            
         original_node_coordinates = rr.arrays["node_coordinates"]       
         node_ids_out = readAndConvert.sequential(rr.arrays["node_ids"])
         
@@ -196,8 +189,6 @@ class readAndConvert:
             
             "Node Updates"
  
-            self._d3plot.arrays[ArrayType.node_acceleration]              = np.array([rr.arrays["node_acceleration"]])
-            self._d3plot.arrays[ArrayType.node_velocity]                  = np.array([rr.arrays["node_velocity"]])
             self._d3plot.arrays[ArrayType.node_displacement]              = np.array([rr.arrays["node_coordinates"]])            
             self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out
             
@@ -1249,6 +1240,38 @@ class readAndConvert:
                 database_extent_binary ={}
                 array_requirements = {}
 
+                flag = "NODES"
+                
+                if rr.raw_header["nbNodes"] > 0:   
+                    
+                    database_extent_binary[flag] = {}      
+                    _ = database_extent_binary[flag]
+                    
+                    database_extent_binary[flag][0] = []
+                    database_extent_binary[flag][1] = _[0] + [ArrayType.node_velocity]  
+                    database_extent_binary[flag][2] = _[1] + [ArrayType.node_acceleration]  
+                    
+                    # Dyna output
+                    array_requirements[ArrayType.node_velocity] = {}
+                    _ = array_requirements[ArrayType.node_velocity]
+                    # Radioss outputs needed to compute Dyna output
+                    _["dependents"]     = ["node_velocity"]
+                    _["shape"]          = (1,n_nodes)
+                    _["convert"]        = None
+                    _["tracker"]        = None
+                    
+                    # Dyna output
+                    array_requirements[ArrayType.node_acceleration] = {}
+                    _ = array_requirements[ArrayType.node_acceleration]
+                    # Radioss outputs needed to compute Dyna output
+                    _["dependents"]     = ["node_acceleration"]
+                    _["shape"]          = (1,n_nodes)
+                    _["convert"]        = None
+                    _["tracker"]        = None
+
+
+
+
                 flag = "SHELLS"
                 
                 if rr.raw_header["nbEFunc"] > 0:   
@@ -1445,12 +1468,12 @@ class readAndConvert:
                                 tracker             = array_requirements[array_output]["tracker"]
                                 if conversion_function:
                                     conversion_inputs = [rr.arrays[i] for i in array_requirements[array_output]["dependents"]]
-                                    if tracker.any():
+                                    if tracker is not None:
                                         self._d3plot.arrays[array_output] = readAndConvert.apply_sorter(conversion_function(*conversion_inputs), tracker)[np.newaxis, :]
                                     else:
                                         self._d3plot.arrays[array_output] = conversion_function(*conversion_inputs)[np.newaxis, :]
                                 else:
-                                    if tracker.any():
+                                    if tracker is not None:
                                         self._d3plot.arrays[array_output] = readAndConvert.apply_sorter(rr.arrays[array_requirements[array_output]["dependents"][0]], tracker)[np.newaxis, :]
                                     else:
                                         self._d3plot.arrays[array_output] = rr.arrays[array_requirements[array_output]["dependents"][0]][np.newaxis, :]
@@ -1486,9 +1509,7 @@ class readAndConvert:
          
         return True
         
-
 if __name__ == '__main__':   
              
-    file_stem = "C:/Users/PC/Downloads/nblah/DynaOpt"
-   
+    file_stem = "path/model"
     a2d = readAndConvert(file_stem)
