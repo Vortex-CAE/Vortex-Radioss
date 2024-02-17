@@ -133,7 +133,7 @@ class readAndConvert:
 
 
     def sequential(input_array):
-        "Radioss puts a load of zeros at the end, increase by 1 to keep Primer happy for sequential node numbering"    
+        "IDs defined as zero need unique renumbering"    
   
         zero_num = max(input_array).astype('int64')
         output = []
@@ -147,14 +147,8 @@ class readAndConvert:
         return output 
 
     def generate_sorter(input_array):
-       _index_tracker = [i for i in range(0,len(input_array))]
-       index_tracker = [y for x, y in sorted(zip(list(input_array), list(_index_tracker)))]      
-       #index_tracker = [0] * len(_index_tracker)
-       
-       #for i_a, a in enumerate(_index_tracker):
-           #index_tracker[a] = i_a    
            
-       return np.array(index_tracker)
+       return np.argsort(input_array)
    
     def invert_sorter(input_array):
         index_tracker = np.zeros((np.max(input_array) + 1,))
@@ -193,9 +187,9 @@ class readAndConvert:
         "Expected array sizes"
         #n_parts = rr.raw_header["nbParts"]
         n_nodes = rr.raw_header["nbNodes"]
-        n_beams = rr.raw_header["nbElts1D"]
+        #n_beams = rr.raw_header["nbElts1D"]
         n_shell = rr.raw_header["nbFacets"]
-        n_solid = rr.raw_header["nbElts3D"]
+        #n_solid = rr.raw_header["nbElts3D"]
         #n_contact = rr.raw_header["nbContact"]
         #n_rigid_body = rr.raw_header["nbRigidBodies"]
         #nip_beams = rr.raw_header["nbIPBeam"]
@@ -338,7 +332,6 @@ class readAndConvert:
                 database_extent_binary ={}
                 array_requirements = {}
 
-                
                 if rr.raw_header["nbNodes"] > 0:   
                     
                     flag = "NODES"
@@ -421,7 +414,6 @@ class readAndConvert:
                     array_requirements[ArrayType.element_shell_stress] = {}
                     _ = array_requirements[ArrayType.element_shell_stress]
                     # Radioss outputs needed to comptute Dyna output
-                    #_["dependents"]     = ["element_shell_stress_(upper)","element_shell_stress_(lower)"]
                     _["dependents"]     = ["Stress (upper)","Stress (lower)"]
                     _["shape"]          = (1,n_shell, nip_shell, 6)
                     _["convert"]        = convert.element_shell_stress
@@ -432,7 +424,6 @@ class readAndConvert:
                     array_requirements[ArrayType.element_shell_effective_plastic_strain] = {}
                     _ = array_requirements[ArrayType.element_shell_effective_plastic_strain]
                     # Radioss outputs needed to comptute Dyna output
-                    #_["dependents"]     = ["element_shell_stress_(upper)","element_shell_stress_(lower)"]
                     _["dependents"]     = ["element_shell_plastic_strain_upper", 'element_shell_plastic_strain_lower']
                     _["shape"]          = (1, n_shell, nip_shell)
                     _["convert"]        = convert.element_shell_effective_plastic_strain
@@ -445,8 +436,6 @@ class readAndConvert:
             
             dependency_check = {}
             flag_max        =  {}
-
-            #print(rr.arrays)
 
             for flag in database_extent_binary:
                 flag_max[flag] = -float('inf')
@@ -466,7 +455,6 @@ class readAndConvert:
                         dependency_check[array_output] = all_dependents_exist
                         if all_dependents_exist:
                             flag_max[flag] = max(flag_max[flag],array_group) 
-            
             
             "Generate the output arrays"
                        
