@@ -113,7 +113,8 @@ class readAndConvert:
         filepath: str = None,
         use_shell_mask=True,
         use_solid_mask=False,
-        use_beam_mask=False
+        use_beam_mask=False,
+        silent=False
     ):
         """Constructor for a readAndConvert
 
@@ -130,7 +131,7 @@ class readAndConvert:
 
         self._start=time.time()
         self._d3plot = D3plot()
-        self.A_2_D(filepath, use_shell_mask, use_solid_mask, use_beam_mask)
+        self.A_2_D(filepath, use_shell_mask, use_solid_mask, use_beam_mask, silent)
 
     def sequential(input_array):
         
@@ -175,8 +176,13 @@ class readAndConvert:
         letters = string.ascii_lowercase
         result_str = ''.join(random.choice(letters) for i in range(length))
         return "_" + result_str + str(ifile)    
+    
+    def LOGGER(self, string, silent):
+        if not silent:
+            print(string)
+    
 
-    def A_2_D(self,file_stem, use_shell_mask, use_solid_mask, use_beam_mask):
+    def A_2_D(self,file_stem, use_shell_mask, use_solid_mask, use_beam_mask, silent):
     
         if os.path.isfile(file_stem + "d3plot"):
             return True
@@ -186,7 +192,8 @@ class readAndConvert:
         
         original_node_coordinates       = None
                        
-        print("Mapping database")
+        self.LOGGER("Mapping database", silent)
+        
         rr = RadiossReader.RadiossReader(file_list[0]) 
 
         "Expected array sizes"
@@ -328,9 +335,9 @@ class readAndConvert:
             self._d3plot.arrays[ArrayType.element_solid_part_indexes]   = inverted_part_ids_tracker[_]   
             self._d3plot.arrays[ArrayType.element_solid_ids]            = element_solid_ids_out.astype(int)                 
         
-        print("Processing states")
+        self.LOGGER("Processing states", silent)
         
-        for ifile, file in enumerate(tqdm(file_list)):            
+        for ifile, file in enumerate(tqdm(file_list, disable = silent)):            
             
             if ifile:
                 rr = RadiossReader.RadiossReader(file) 
