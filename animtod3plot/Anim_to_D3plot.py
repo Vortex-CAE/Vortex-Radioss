@@ -4,7 +4,6 @@
 
 from lasso.dyna.d3plot import D3plot
 from lasso.dyna.array_type import ArrayType
-#from .RadiossTHReader import RadiossTHReader
 import RadiossReader
 
 import numpy as np
@@ -165,7 +164,6 @@ class readAndConvert:
            
         return np.array(index_tracker).astype(int)  
    
-   
     def apply_sorter(input_array, tracker_array):
         
         return input_array[tracker_array]   
@@ -290,14 +288,27 @@ class readAndConvert:
             beam_part_ids                                       =   []
             beam_part_num                                       =   0              
                       
+        # Generate Part trackers
         _                                                           = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
         part_ids_tracker                                            = readAndConvert.generate_sorter(_)
         inverted_part_ids_tracker                                   = readAndConvert.invert_sorter(part_ids_tracker)
         
-        # Part arrays
-        self._d3plot.arrays[ArrayType.part_ids]                     = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int) 
+        # Part arrays these all need defining
         
+        self._d3plot.arrays[ArrayType.part_ids]                     = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int) 
+        self._d3plot.arrays[ArrayType.part_ids_unordered]           = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int) 
+        
+        # Set part titles and part masses to be equal to PID as a check
+        _                                                           = np.array(readAndConvert.apply_sorter(_, part_ids_tracker)).astype(str)
+        # Part titles are encoded into ascii binary
+        self._d3plot.arrays[ArrayType.part_titles]                  = np.char.encode(_, encoding="ascii")
+        # Part masses are floats
         self._d3plot.arrays[ArrayType.part_mass]                    = np.array([readAndConvert.apply_sorter(_, part_ids_tracker)]).astype("<f")
+        
+        # Not an ID this is an index in Fortran starting at 1
+        self._d3plot.arrays[ArrayType.part_titles_ids]              = np.arange(1,len(_) +1).astype("int64")
+        # Not an ID this is an index in Fortran starting at 1
+        self._d3plot.arrays[ArrayType.part_ids_cross_references]    = np.arange(1,len(_) +1).astype("int64")
         
         if rr.raw_header["nbFacets"] > 0:
             # Assign the shell part indexes
@@ -477,7 +488,6 @@ class readAndConvert:
                         # Check all dependencies exist
                         all_dependents_exist = True
                         ___ = array_requirements[array_output]["dependents"]
-                        #print(___)
                         for check_dependent in ___:
                             if check_dependent not in rr.arrays:
                                 all_dependents_exist = False
