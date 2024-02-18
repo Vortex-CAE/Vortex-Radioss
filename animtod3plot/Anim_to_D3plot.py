@@ -130,20 +130,15 @@ class readAndConvert:
         self._d3plot = D3plot()
         self.A_2_D(filepath)
 
-
-
     def sequential(input_array):
-        "IDs defined as zero need unique renumbering"    
+        
+        "IDs defined as zero need unique, non-zero renumbering"    
   
-        zero_num = max(input_array).astype('int64')
-        output = []
-        for i in input_array:
-            if i != 0:
-                output.append(i)
-            else:
-                zero_num +=1
-                output.append(zero_num)
-        output = np.array(output)
+        zero_num_start = max(input_array).astype('int64')
+        mask = (input_array == np.zeros(len(input_array)))
+        new_id = np.cumsum(mask) + zero_num_start
+        output = np.where(mask, new_id, input_array)
+        
         return output 
 
     def generate_sorter(input_array):
