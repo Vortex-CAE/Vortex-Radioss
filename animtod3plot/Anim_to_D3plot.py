@@ -245,6 +245,10 @@ class readAndConvert:
             
             shell_part_ids                                              =  np.array(rr.raw_arrays["pTextA"]).astype("U9").astype(int)
             shell_part_num                                              = len(shell_part_ids)
+        
+        else:
+            shell_part_ids                                              = []
+            shell_part_num                                              = 0
             
         if rr.raw_header["nbElts3D"] > 0:            
             element_solid_node_indexes = rr.arrays["element_solid_node_indexes"]            
