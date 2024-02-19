@@ -154,6 +154,23 @@ class readAndConvert:
             mask_map = indices[1:]
         
         return np.array(mask_map).astype(int)
+    
+    def generate_display_entity(indexes, names, search_str, show):
+        
+        if show:
+            _ = np.zeros(shape=len(names))
+            __ = 1
+        else:
+            _ = np.ones(shape=len(names))
+            __ = 0
+                        
+        for i_check_name, check_name in enumerate(names):
+            if search_str in check_name:
+                _[i_check_name] = __
+        
+        display_array = _[indexes]
+        
+        return display_array           
 
     def generate_sorter(input_array):
            
@@ -206,9 +223,26 @@ class readAndConvert:
         if rr.raw_header["nbFacets"] > 0:
             
             if use_shell_mask:
-                shell_mask = readAndConvert.generate_mask_map(rr.arrays["element_shell_ids"])
+                show_rigid_wall = True
+                display_shell = np.zeros(rr.raw_header["nbFacets"])
+                
+                # Masking can remove useful entities such as rigid walls
+                # This will search a text array to match a string and return the boolean array to indicate should be shown
+                # Changing True to False will generate the inverse array
+                if show_rigid_wall:
+                    display_shell = readAndConvert.generate_display_entity(rr.arrays["element_shell_part_indexes"], rr.raw_arrays["pTextA"], "_rigid_wall_2", True)  
+                
+                # The shell mask function filters out any entity that has a id of zero
+                # In order to keep entities from the bool array we employ a trick below
+                # we create dummy unique ids that are non-zero for all elements that are active in the display shell array
+                # This dummy array is then given to the masking function
+
+                _ = max(rr.arrays["element_shell_ids"])
+                dummy_id_offset = (np.cumsum(display_shell) + _)*display_shell.astype(bool)
+                shell_mask = readAndConvert.generate_mask_map(rr.arrays["element_shell_ids"] + dummy_id_offset)
+    
             else:
-                shell_mask = np.arange(0, len(rr.arrays["element_shell_ids"]))            
+                shell_mask = np.arange(0, len(rr.arrays["element_shell_ids"]))        
                         
             shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"][shell_mask]))
             element_shell_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"][shell_mask]), shell_ids_tracker)
@@ -233,10 +267,15 @@ class readAndConvert:
             
             solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"][solid_mask]))
             element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"][solid_mask]), solid_ids_tracker)
-            
-
-        original_node_coordinates = rr.arrays["node_coordinates"]       
-        node_ids_out = readAndConvert.sequential(rr.arrays["node_ids"])
+               
+        _                                                           = readAndConvert.sequential(rr.arrays["node_ids"])
+        node_ids_tracker                                            = readAndConvert.generate_sorter(_)                
+        inverted_node_ids_tracker                                   = readAndConvert.invert_sorter(node_ids_tracker)
+        original_node_coordinates                                   = readAndConvert.apply_sorter(rr.arrays["node_coordinates"], node_ids_tracker)
+        
+        node_ids_out = readAndConvert.apply_sorter(_, node_ids_tracker)
+        
+        self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out        
         
         "Parts and geometry"
 
@@ -260,7 +299,7 @@ class readAndConvert:
                     if len(np.unique(__)) == 4:
                         element_solid_node_indexes[i_solid] = __
             
-            self._d3plot.arrays[ArrayType.element_solid_node_indexes] = readAndConvert.apply_sorter(element_solid_node_indexes, solid_ids_tracker)           
+                       
            
             solid_part_ids                                       =  np.array(rr.raw_arrays["pText3DA"]).astype("U9").astype(int)
         
@@ -277,7 +316,7 @@ class readAndConvert:
             element_beam_node_indexes=np.zeros(shape=(rr.raw_header["nbElts1D"],5))
             element_beam_node_indexes[:,0]                              = rr.arrays["element_beam_node_indexes"][:,0]
             element_beam_node_indexes[:,1]                              = rr.arrays["element_beam_node_indexes"][:,1]
-            self._d3plot.arrays[ArrayType.element_beam_node_indexes]    = readAndConvert.apply_sorter(element_beam_node_indexes, beam_ids_tracker).astype(int)
+            
             
             "Partless beams exists so we have to generate a dummy one"
             
@@ -315,21 +354,25 @@ class readAndConvert:
         if rr.raw_header["nbFacets"] > 0:
             # Assign the shell part indexes
             _   = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
-            self._d3plot.arrays[ArrayType.element_shell_part_indexes] = inverted_part_ids_tracker[_]
+            self._d3plot.arrays[ArrayType.element_shell_part_indexes]     = inverted_part_ids_tracker[_]
             self._d3plot.arrays[ArrayType.element_shell_ids]              = element_shell_ids_out.astype(int) 
-            self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker).astype(int)  
+            self._d3plot.arrays[ArrayType.element_shell_node_indexes]     = inverted_node_ids_tracker[readAndConvert.apply_sorter(rr.arrays["element_shell_node_indexes"], shell_ids_tracker).astype(int)  ]
         
         if rr.raw_header["nbElts1D"] > 0:
             # Assign the beam indexes
             _   = readAndConvert.apply_sorter(element_beam_part_indexes, beam_ids_tracker).astype(int) + shell_part_num            
             self._d3plot.arrays[ArrayType.element_beam_part_indexes]    = inverted_part_ids_tracker[_]
+            self._d3plot.arrays[ArrayType.element_beam_node_indexes]    = inverted_node_ids_tracker[readAndConvert.apply_sorter(element_beam_node_indexes, beam_ids_tracker).astype(int)]
         
         if rr.raw_header["nbElts3D"] > 0:            
             # Assign the solid part indexes
             _   = readAndConvert.apply_sorter(rr.arrays["element_solid_part_indexes"], solid_ids_tracker) + shell_part_num + beam_part_num              
             self._d3plot.arrays[ArrayType.element_solid_part_indexes]   = inverted_part_ids_tracker[_]   
-            self._d3plot.arrays[ArrayType.element_solid_ids]            = element_solid_ids_out.astype(int)                 
-        
+            self._d3plot.arrays[ArrayType.element_solid_ids]            = element_solid_ids_out.astype(int)  
+            self._d3plot.arrays[ArrayType.element_solid_node_indexes]   = inverted_node_ids_tracker[readAndConvert.apply_sorter(element_solid_node_indexes, solid_ids_tracker)]
+            
+            
+
         self.LOGGER("Processing states", silent)
         
         for ifile, file in enumerate(tqdm(file_list, disable = silent)):            
@@ -340,9 +383,8 @@ class readAndConvert:
             self._d3plot.arrays[ArrayType.node_coordinates]               = original_node_coordinates          
             
             "Node Updates"
- 
-            self._d3plot.arrays[ArrayType.node_displacement]              = np.array([rr.arrays["node_coordinates"]])            
-            self._d3plot.arrays[ArrayType.node_ids]                       = node_ids_out
+                                                            
+            self._d3plot.arrays[ArrayType.node_displacement]              = np.array([readAndConvert.apply_sorter(rr.arrays["node_coordinates"], node_ids_tracker)]).astype("<f")
                
             "Timestep Updates"
             timesteps                       = []              
@@ -394,7 +436,7 @@ class readAndConvert:
                     _["dependents"]     = ["node_velocity"]
                     _["shape"]          = (1,n_nodes,3)
                     _["convert"]        = None
-                    _["tracker"]        = None
+                    _["tracker"]        = node_ids_tracker
                     _["additional"]     = []
                     
                     # Dyna output
@@ -404,7 +446,7 @@ class readAndConvert:
                     _["dependents"]     = ["node_acceleration"]
                     _["shape"]          = (1,n_nodes,3)
                     _["convert"]        = None
-                    _["tracker"]        = None
+                    _["tracker"]        = node_ids_tracker
                     _["additional"]     = []
                 
                 if rr.raw_header["nbEFunc"] > 0:   
@@ -533,27 +575,32 @@ class readAndConvert:
             random_name = readAndConvert.generate_random_name(10, ifile)
             temp_d3plot_name = os.path.dirname(file_stem) + "/" + random_name
             
-            self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
-            
-            "Rename or remove header"
-            if ifile == 0:
-                _ = file_stem + ".d3plot"
-                if os.path.isfile(_):
-                    os.remove(_)
-                os.rename(temp_d3plot_name, _)
-            else:
-                os.remove(temp_d3plot_name)
-                
-            "Rename plot state"
             d3plot_index = ifile+1
             if d3plot_index <100: 
                 padding = 2
             else:
-                padding = 3
-                
+                padding = 3            
+            
+            "Remove old files"
+            if ifile == 0:
+                _ = file_stem + ".d3plot"
+                if os.path.isfile(_):
+                    os.remove(_)
             _ = file_stem + ".d3plot" + str(d3plot_index).zfill(padding)
             if os.path.isfile(_):
-                os.remove(_)
+                os.remove(_)           
+            
+            
+            self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
+            
+            "Rename new files and remove temp files"
+            if ifile == 0:
+                _ = file_stem + ".d3plot"
+                os.rename(temp_d3plot_name, _)
+            else:
+                os.remove(temp_d3plot_name)
+                
+            _ = file_stem + ".d3plot" + str(d3plot_index).zfill(padding)
             os.rename(temp_d3plot_name + "01", _)        
                                                  
         return True
@@ -565,7 +612,7 @@ if __name__ == '__main__':
     file_stem = "C:/Users/PC/Downloads/test3/DynaOpt"
     file_stem = "C:/Users/PC/Downloads/test4/CRA2AV4"
     
-    a2d = readAndConvert(file_stem, use_shell_mask=False)
+    a2d = readAndConvert(file_stem, use_shell_mask=True)
     
       
 
