@@ -3,7 +3,7 @@ Vortex-Radioss
 ======================
 <img align="right" src="https://github.com/Vortex-CAE/Vortex-Radioss/assets/144378169/e97457cb-2355-4eca-8849-fd4b81b21f4b" alt="My Image">
 
-This library is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
+Vortex-radioss is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
 
 
 Prerequisites
@@ -24,7 +24,7 @@ Modules
 This module will read in the animation data from one Radioss Animation file (One timestep), as the raw arrays are compressed and difficult to use, we reccommend using the unpacked arrays as described below. 
 
     # Load the module
-    from vortex_radioss.radioss.RadiossReader import RadiossReader
+    from vortex_radioss.animtod3plot.RadiossReader import RadiossReader
     
     # Generate animation object
     rr = RadiossReader("fileA001")
@@ -36,14 +36,14 @@ This module will read in the animation data from one Radioss Animation file (One
     # Print header dictionary keys
     print(rr.raw_header.keys())
 
-    ### To display the arrays as they come out of Radioss (Not reccomended)
+    ### To display the arrays as they come out of Radioss
     # Return raw arrays dictionary
     rr.raw_arrays
     
     # Print raw arrays dictionary keys
     print(rr.raw_arrays.keys())
 
-    ### To display the arrays once they are unpacked (Reccomended)
+    ### To display the arrays once they are unpacked
     # Return unpacked dictionary arrays
     rr.arrays
     
@@ -54,7 +54,7 @@ This module will read in the animation data from one Radioss Animation file (One
 This module will read in the data from one Radioss Time-History file (Multiple timesteps).
 
     # Load the module
-    from vortex_radioss.radioss.RadiossTHReader import RadiossTHReader
+    from vortex_radioss.animtod3plot.RadiossTHReader import RadiossTHReader
     
     # Generate Time-History object
     th = RadiossReader("fileT01")
@@ -74,15 +74,15 @@ This module will read in the data from one Radioss Time-History file (Multiple t
     print(th.arrays.keys())     
 
 ### Radioss Animation to LS-Dyna D3Plot
-This module will convert Radioss Animation Files to LS-Dyna's D3plot format. The Radioss Time-History files will also be required as they contain data required by D3plot that is not present in the Animation files. This conversion is not comprehensive and is limited to only some common scalar and tensor arrays.
+This module converts Radioss Animation Files to LS-Dyna's D3plot format. Tensor and scalar array conversions are currently limited to thickness, stress, energy density and plastic strain for shell elements.
 
        # Load the module
-      from vortex_radioss.radioss.Anim_to_D3plot import A_2_D
+      from vortex_radioss.animtod3plot.Anim_to_D3plot import readAndConvert
       
       # Use the file stem e.g for "folder/fileA001", "folder/fileA002" would be:
-      A_2_D("folder/file")
+      readAndConvert("folder/file")
       
-      # The D3plots files "folder/file.d3plot*" will be generated
+      # The D3plot files "folder/file.d3plot*" will be generated
 
 CONTACT
 ------------
@@ -90,14 +90,12 @@ To get in touch please feel free to contact us on LinkedIn
 
 Company:   
 https://www.linkedin.com/company/vortex-cae     
-Author:    
-https://www.linkedin.com/in/david-russell-4b110717a/
       
 LICENSING
 ------------
 
 We chose to open-source license this code-base under Mozilla Public License, version 2.0.
-In simple terms this license offers minimal restrictions on the user, with the condition that if the user modifies, improves or bug-fixes the code, then those changes should be published so that the whole community can benefit from the change.
+This license offers minimal restrictions on the user, with the condition that modifications or enhancements made to the code should be submitted to this repository.
 
 For more information please see the license file and https://www.mozilla.org/en-US/MPL/2.0/FAQ/
 
