@@ -212,7 +212,11 @@ class readAndConvert:
                        
         self.LOGGER("Mapping database", silent)
         
-        rr = RadiossReader.RadiossReader(file_list[0])  
+        if not file_list:
+            print("No files found..\nPlease check file stem:\ne.g\nC:/Folder/ModelA00*\nWould be:\nC:/Folder/Model*")
+            return
+        else:
+            rr = RadiossReader.RadiossReader(file_list[0])  
         
         #rr.raw_header["nbElts1D"] = 0
         
@@ -646,8 +650,7 @@ if __name__ == '__main__':
     #file_stem = "P:/Optimisation/A001a/Baseline/FFB_0/DynaOpt"
     #file_stem = "C:/Users/PC/Downloads/test3/DynaOpt"
     file_stem = "C:/Users/PC/Downloads/test4/CRA2AV4"
-    
+
     a2d = readAndConvert(file_stem, use_shell_mask=True)
     
       
-
