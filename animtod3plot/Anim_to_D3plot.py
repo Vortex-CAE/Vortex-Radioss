@@ -137,7 +137,7 @@ class readAndConvert:
         
         "IDs defined as zero need unique, non-zero renumbering"    
   
-        zero_num_start = max(input_array).astype('int64')
+        zero_num_start = max(input_array).astype(int)
         mask = (input_array == np.zeros(len(input_array)))
         new_id = np.cumsum(mask) + zero_num_start
         output = np.where(mask, new_id, input_array)
@@ -384,7 +384,7 @@ class readAndConvert:
 
         self._d3plot.arrays[ArrayType.part_titles_ids]              = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int)
         # Not an ID this is an index in Fortran starting at 1
-        self._d3plot.arrays[ArrayType.part_ids_cross_references]    = np.arange(1,len(_) +1).astype("int64")
+        self._d3plot.arrays[ArrayType.part_ids_cross_references]    = np.arange(1,len(_) +1).astype(int)
         
         if rr.raw_header["nbFacets"] > 0:
             # Assign the shell part indexes
@@ -625,9 +625,9 @@ class readAndConvert:
             if os.path.isfile(_):
                 os.remove(_)           
             
-            self._d3plot.header.itype = np.int64
-            self._d3plot.header.ftype = np.float64
-            self._d3plot.header.wordsize = 8
+            #self._d3plot.header.itype = np.int64
+            #self._d3plot.header.ftype = np.float64
+            #self._d3plot.header.wordsize = 8
 
             
             self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
