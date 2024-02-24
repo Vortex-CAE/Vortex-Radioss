@@ -5,8 +5,8 @@ from unittest import TestCase
 import h5py
 import numpy as np
 
-from lasso.dimred.dimred_run import DIMRED_STAGES, DimredRun, DimredRunError, HDF5FileNames
-from lasso.dimred.test_plot_creator import create_50_fake_plots
+from vortex_radioss.lasso.dimred.dimred_run import DIMRED_STAGES, DimredRun, DimredRunError, HDF5FileNames
+from vortex_radioss.lasso.dimred.test_plot_creator import create_50_fake_plots
 
 
 class TestDimredRun(TestCase):

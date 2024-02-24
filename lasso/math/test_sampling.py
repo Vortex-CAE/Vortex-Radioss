@@ -1,6 +1,6 @@
 import unittest
 
-from lasso.math.sampling import unique_subsamples
+from vortex_radioss.lasso.math.sampling import unique_subsamples
 
 
 class Test(unittest.TestCase):

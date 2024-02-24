@@ -5,8 +5,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from lasso.dimred.svd.subsampling_methods import create_reference_subsample, remap_random_subsample
-from lasso.dimred.test_plot_creator import create_2_fake_plots
+from vortex_radioss.lasso.dimred.svd.subsampling_methods import create_reference_subsample, remap_random_subsample
+from vortex_radioss.lasso.dimred.test_plot_creator import create_2_fake_plots
 
 
 class TestSubsampling(TestCase):

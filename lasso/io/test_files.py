@@ -1,5 +1,5 @@
 import unittest
-from lasso.io.files import collect_files
+from vortex_radioss.lasso.io.files import collect_files
 
 
 class Test(unittest.TestCase):

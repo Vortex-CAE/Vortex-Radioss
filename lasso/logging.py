@@ -1,7 +1,7 @@
 import logging
 import platform
 
-from Vortex_Radioss_main.lasso.utils.console_coloring import ConsoleColoring
+from vortex_radioss.lasso.utils.console_coloring import ConsoleColoring
 
 # settings
 MARKER_INFO = "[/]"

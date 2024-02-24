@@ -1,6 +1,6 @@
 from concurrent import futures
 
-from lasso.diffcrash.diffcrash_run import (
+from vortex_radioss.lasso.diffcrash.diffcrash_run import (
     DC_STAGE_EIGEN,
     DC_STAGE_EXPORT,
     DC_STAGE_IMPORT,

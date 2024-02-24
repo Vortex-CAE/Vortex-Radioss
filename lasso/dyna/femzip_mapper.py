@@ -4,9 +4,9 @@ import traceback
 from typing import Dict, List, Set, Tuple, Union
 
 import numpy as np
-from Vortex_Radioss_main.lasso.dyna.array_type import ArrayType
-from Vortex_Radioss_main.lasso.femzip.femzip_api import FemzipAPI, FemzipFileMetadata, VariableInfo
-from Vortex_Radioss_main.lasso.femzip.fz_config import FemzipArrayType, FemzipVariableCategory, get_last_int_of_line
+from vortex_radioss.lasso.dyna.array_type import ArrayType
+from vortex_radioss.lasso.femzip.femzip_api import FemzipAPI, FemzipFileMetadata, VariableInfo
+from vortex_radioss.lasso.femzip.fz_config import FemzipArrayType, FemzipVariableCategory, get_last_int_of_line
 
 
 TRANSL_FEMZIP_ARRATYPE_TO_D3PLOT_ARRAYTYPE: Dict[

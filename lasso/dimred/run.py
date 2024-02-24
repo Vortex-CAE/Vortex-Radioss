@@ -1,7 +1,7 @@
 from rich.console import Console
 from rich.theme import Theme
 
-from lasso.dimred.dimred_run import (
+from vortex_radioss.lasso.dimred.dimred_run import (
     DIMRED_STAGES,
     DimredRun,
     DimredRunError,

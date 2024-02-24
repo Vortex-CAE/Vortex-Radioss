@@ -102,7 +102,7 @@ class Binout:
 
         Examples
         --------
-            >>> from lasso.dyna import Binout
+            >>> from vortex_radioss.lasso.dyna import Binout
             >>> binout = Binout("test/binout")
             >>> # get top dirs
             >>> binout.read()
@@ -142,7 +142,7 @@ class Binout:
 
         Examples
         --------
-            >>> from lasso.dyna import Binout
+            >>> from vortex_radioss.lasso.dyna import Binout
             >>> binout = Binout('path/to/binout')
 
             Read a time-dependent array.

@@ -1,14 +1,14 @@
 import os
 import tempfile
-from lasso.io.binary_buffer import BinaryBuffer
-from lasso.femzip.femzip_api import FemzipAPI
+from vortex_radioss.lasso.io.binary_buffer import BinaryBuffer
+from vortex_radioss.lasso.femzip.femzip_api import FemzipAPI
 from unittest import TestCase
 
 import struct
 import numpy as np
 
-from lasso.dyna.d3plot import D3plot, FilterType, _negative_to_positive_state_indexes
-from lasso.dyna.array_type import ArrayType
+from vortex_radioss.lasso.dyna.d3plot import D3plot, FilterType, _negative_to_positive_state_indexes
+from vortex_radioss.lasso.dyna.array_type import ArrayType
 
 
 class D3plotTest(TestCase):

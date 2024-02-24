@@ -6,13 +6,13 @@ from typing import Sequence, Union
 
 import numpy as np
 
-from lasso.dimred.svd.html_str_eles import (
+from vortex_radioss.lasso.dimred.svd.html_str_eles import (
     CONST_STRING,
     OVERHEAD_STRING,
     SCRIPT_STRING,
     TRACE_STRING,
 )
-from lasso.plotting.plot_shell_mesh import _read_file
+from vortex_radioss.lasso.plotting.plot_shell_mesh import _read_file
 
 
 def timestamp() -> str:

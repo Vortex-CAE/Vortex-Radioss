@@ -2,7 +2,7 @@ import hashlib
 from unittest import TestCase
 
 import numpy as np
-from lasso.dimred.svd.plot_beta_clusters import plot_clusters_js
+from vortex_radioss.lasso.dimred.svd.plot_beta_clusters import plot_clusters_js
 
 
 def hash_str(data: str) -> str:

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from lasso.dimred.svd.pod_functions import calculate_v_and_betas
+from vortex_radioss.lasso.dimred.svd.pod_functions import calculate_v_and_betas
 import numpy as np
 from typing import Tuple
 

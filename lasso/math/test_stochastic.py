@@ -1,6 +1,6 @@
 import unittest
 
-from lasso.math.stochastic import jensen_shannon_entropy
+from vortex_radioss.lasso.math.stochastic import jensen_shannon_entropy
 
 
 class Test(unittest.TestCase):

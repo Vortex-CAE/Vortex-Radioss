@@ -1,13 +1,13 @@
 from unittest import TestCase
 
 import numpy as np
-from lasso.dyna.d3plot_header import (
+from vortex_radioss.lasso.dyna.d3plot_header import (
     D3plotFiletype,
     D3plotHeader,
     d3plot_filetype_from_integer,
     get_digit,
 )
-from lasso.io.binary_buffer import BinaryBuffer
+from vortex_radioss.lasso.io.binary_buffer import BinaryBuffer
 
 
 class D3plotHeaderTest(TestCase):

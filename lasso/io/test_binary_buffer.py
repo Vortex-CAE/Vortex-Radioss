@@ -3,7 +3,7 @@ import numpy as np
 from unittest import TestCase
 import filecmp
 
-from lasso.io.binary_buffer import BinaryBuffer
+from vortex_radioss.lasso.io.binary_buffer import BinaryBuffer
 
 
 class BinaryBufferTest(TestCase):

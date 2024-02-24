@@ -2,8 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from lasso.dyna.d3plot import D3plot
-from lasso.dyna.array_type import ArrayType
+from vortex_radioss.lasso.dyna.d3plot import D3plot
+from vortex_radioss.lasso.dyna.array_type import ArrayType
 import RadiossReader
 
 import numpy as np
@@ -137,7 +137,7 @@ class readAndConvert:
         
         "IDs defined as zero need unique, non-zero renumbering"    
   
-        zero_num_start = max(input_array).astype(int)
+        zero_num_start = max(input_array).astype('int64')
         mask = (input_array == np.zeros(len(input_array)))
         new_id = np.cumsum(mask) + zero_num_start
         output = np.where(mask, new_id, input_array)
@@ -384,7 +384,7 @@ class readAndConvert:
 
         self._d3plot.arrays[ArrayType.part_titles_ids]              = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int)
         # Not an ID this is an index in Fortran starting at 1
-        self._d3plot.arrays[ArrayType.part_ids_cross_references]    = np.arange(1,len(_) +1).astype(int)
+        self._d3plot.arrays[ArrayType.part_ids_cross_references]    = np.arange(1,len(_) +1).astype("int64")
         
         if rr.raw_header["nbFacets"] > 0:
             # Assign the shell part indexes
@@ -625,9 +625,9 @@ class readAndConvert:
             if os.path.isfile(_):
                 os.remove(_)           
             
-            #self._d3plot.header.itype = np.int64
-            #self._d3plot.header.ftype = np.float64
-            #self._d3plot.header.wordsize = 8
+            self._d3plot.header.itype = np.int64
+            self._d3plot.header.ftype = np.float64
+            self._d3plot.header.wordsize = 8
 
             
             self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
@@ -648,9 +648,9 @@ if __name__ == '__main__':
              
     #file_stem = "C:/Users/PC/Downloads/test/DynaOpt"    
     #file_stem = "P:/Optimisation/A001a/Baseline/FFB_0/DynaOpt"
-    #file_stem = "C:/Users/PC/Downloads/test3/DynaOpt"
-    file_stem = "C:/Users/PC/Downloads/test4/CRA2AV4"
-
+    file_stem = "C:/Users/PC/Downloads/test3/DynaOpt"
+    #file_stem = "C:/Users/PC/Downloads/test4/CRA2AV4"
+    
     a2d = readAndConvert(file_stem, use_shell_mask=True)
     
       
