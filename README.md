@@ -8,7 +8,7 @@
 </picture>
 <br clear="all" />
 <h1>Vortex-Radioss</h1>
-<img align="right" height="400" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
+<img align="right" height="800" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
 
 This library is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
 
