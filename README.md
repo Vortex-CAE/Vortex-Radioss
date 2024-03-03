@@ -1,7 +1,14 @@
-![Vortex-Radioss](https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/vortex-logo.png)  
-Vortex-Radioss
-======================
-<img align="right" src="https://github.com/Vortex-CAE/Vortex-Radioss/assets/144378169/e97457cb-2355-4eca-8849-fd4b81b21f4b" alt="My Image">
+<picture>
+  <!-- User prefers light mode: -->
+  <source srcset="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Long_Logo_Light.png" align="left" width="400" media="(prefers-color-scheme: light)"/>
+  <!-- User prefers dark mode: -->
+  <source srcset="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Long_Logo_Dark.png" align="left" width="400"  media="(prefers-color-scheme: dark)"/>
+  <!-- Else -->
+  <img src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Long_Logo_Light.png"  align="left" width="400"/>
+</picture>
+<br clear="all" />
+<h1>Vortex-Radioss</h1>
+<img align="right" height="400" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
 
 This library is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
 
