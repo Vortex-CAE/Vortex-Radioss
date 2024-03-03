@@ -94,10 +94,8 @@ This module will convert Radioss Animation Files to LS-Dyna's D3plot format. The
 CONTACT
 ------------
 To get in touch please feel free to contact us on LinkedIn
-
-Company:   
+ 
 https://www.linkedin.com/company/vortex-cae     
-Author:    
 https://www.linkedin.com/in/david-russell-4b110717a/
       
 LICENSING
