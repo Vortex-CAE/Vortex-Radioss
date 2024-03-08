@@ -7,8 +7,8 @@
   <img src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Long_Logo_Light.png"  align="left" width="400"/>
 </picture>
 <br clear="all" />
-<h1>Vortex-Radioss</h1>
-<img align="right" height="800" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
+# Vortex-Radioss
+
 
 This library is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
 
@@ -26,6 +26,7 @@ Alternatively the library can be found here: https://github.com/open-lasso-pytho
 
 Modules
 ------------
+<img align="right" height="800" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
 
 ### Radioss Animation Reader
 This module will read in the animation data from one Radioss Animation file (One timestep), as the raw arrays are compressed and difficult to use, we reccommend using the unpacked arrays as described below. 
