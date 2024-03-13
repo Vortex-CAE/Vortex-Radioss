@@ -34,6 +34,31 @@ class convert:
         return data
 
     @staticmethod
+    def part_shell_mass(*data):
+        
+        # conversion logic for part_internal_energy
+        
+        node_coordinates    = data[0]
+        shell_node_indexes  = data[1]
+        shell_thicknesses   = data[2]
+        shell_densities     = data[3]     
+        shell_part_indexes  = data[4]
+        n_parts             = data[5][0]
+        
+        n1      = node_coordinates[shell_node_indexes][:,0]
+        n2      = node_coordinates[shell_node_indexes][:,1]
+        n3      = node_coordinates[shell_node_indexes][:,2]
+        n4      = node_coordinates[shell_node_indexes][:,3]      
+        ux      = n1[:,0] - n3[:,0]; uy = n1[:,1] - n3[:,1]; uz = n1[:,2] - n3[:,2]
+        vx      = n4[:,0] - n2[:,0]; vy = n4[:,1] - n2[:,1]; vz = n4[:,2] - n2[:,2]        
+        i       = uy*vz - uz*vy; j = uz*vx - ux*vz; k = ux*vy - uy*vx;
+        area    = np.sqrt((i*i)+(j*j)+(k*k))*0.5
+        mass    = area * shell_thicknesses * shell_densities                      
+        _       = np.bincount(shell_part_indexes, mass, minlength = n_parts)        
+                
+        return _
+
+    @staticmethod
     def rigid_body_velocity(*data):
         # conversion logic for rigid_body_velocity
         return data
@@ -357,7 +382,7 @@ class readAndConvert:
         #print(____)
         _[____] = available_pids[:len(____)]
         
-
+        n_parts                                                     = len(_)
         part_ids_tracker                                            = readAndConvert.generate_sorter(_)
         inverted_part_ids_tracker                                   = readAndConvert.invert_sorter(part_ids_tracker)
         
@@ -550,6 +575,26 @@ class readAndConvert:
                     _["convert"]        = convert.element_shell_effective_plastic_strain
                     _["tracker"]        = shell_ids_tracker  
                     _["additional"]     = [nip_shell]
+                    
+                flag = "PARTS"
+                
+                database_extent_binary[flag] = {}      
+                _ = database_extent_binary[flag]
+                
+                # Part masses for shells      
+                if rr.raw_header["nbEFunc"] > 0: 
+                    
+                    database_extent_binary[flag][0] = []
+                    database_extent_binary[flag][0] = _[0] + [ArrayType.part_mass]   
+                    
+                    array_requirements[ArrayType.part_mass] = {}
+                    _ = array_requirements[ArrayType.part_mass]
+                    
+                    _["dependents"]     = ["node_coordinates","element_shell_node_indexes","element_shell_thickness","element_shell_density","element_shell_part_indexes"]
+                    _["shape"]          = (1, n_parts)
+                    _["convert"]        = convert.part_shell_mass
+                    _["tracker"]        = part_ids_tracker     
+                    _["additional"]     = [n_parts]
                     
             "Assign the arrays to the D3PLOT class for writing"
                         
