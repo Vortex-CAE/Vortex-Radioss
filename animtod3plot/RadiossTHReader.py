@@ -337,6 +337,8 @@ class RadiossTHReader:
         self.raw_header["case_names"]["nthgrp2"]    = {}
         nthgrp2_names                               = []
         if nthgrp2                                  > 0:
+            # Ensure no duplicate names
+            name_set = set([])
             for i in range(0, nthgrp2):
                 __, position                                = self.read_single_word(bb, self.itype, position)
                 __, position                                = self.read_single_word(bb, self.itype, position)
@@ -347,7 +349,24 @@ class RadiossTHReader:
                 nvar, position                              = self.read_single_word(bb, self.itype, position)
                 nvar_thgrp.append(nvar)
                 _nthgrp2, position                          = self.read_single_word(bb,[str, titlelength], position)
-                nthgrp2_name                                = _nthgrp2.strip()            
+                nthgrp2_name                                = _nthgrp2.strip()   
+                
+                # Check for duplicate names and up-index array name
+                incremental_index = 2
+                _ = nthgrp2_name   
+                while True:
+                    if nthgrp2_name not in name_set:
+                        name_set.add(nthgrp2_name)
+                        break
+                    else:
+                        if _ + str(_) + str(incremental_index) not in name_set:
+                            nthgrp2_name = _ + str("_") + str(incremental_index)
+                            name_set.add(nthgrp2_name)
+                            break
+                        else:
+                            incremental_index += 1
+                # End of duplicate name check
+                
                 self.raw_header["case_names"]["nthgrp2"]\
                     [nthgrp2_name]                          = {}
                 nthgrp2_names.append(nthgrp2_name)  
@@ -361,8 +380,6 @@ class RadiossTHReader:
                     _name, position                             = self.read_single_word(bb,[str, titlelength], position)
                     _names.append([_id, _name, nvar])
                     
-
-
                     __, position        = self.read_single_word(bb, self.itype, position)
                 self.raw_header["case_names"]["nthgrp2"]\
                                             [nthgrp2_name]  = _names
