@@ -2,8 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from vortex_radioss.lasso.dyna.d3plot import D3plot
-from vortex_radioss.lasso.dyna.array_type import ArrayType
+from lasso.dyna.d3plot import D3plot
+from lasso.dyna.array_type import ArrayType
 import RadiossReader
 
 import numpy as np
@@ -43,7 +43,8 @@ class convert:
         shell_thicknesses   = data[2]
         shell_densities     = data[3]     
         shell_part_indexes  = data[4]
-        n_parts             = data[5][0]
+        shell_is_alive      = data[5]
+        n_parts             = data[6][0]
         
         n1      = node_coordinates[shell_node_indexes][:,0]
         n2      = node_coordinates[shell_node_indexes][:,1]
@@ -53,9 +54,9 @@ class convert:
         vx      = n4[:,0] - n2[:,0]; vy = n4[:,1] - n2[:,1]; vz = n4[:,2] - n2[:,2]        
         i       = uy*vz - uz*vy; j = uz*vx - ux*vz; k = ux*vy - uy*vx;
         area    = np.sqrt((i*i)+(j*j)+(k*k))*0.5
-        mass    = area * shell_thicknesses * shell_densities                      
+        mass    = area * shell_thicknesses * shell_densities * shell_is_alive                     
         _       = np.bincount(shell_part_indexes, mass, minlength = n_parts)        
-                
+             
         return _
 
     @staticmethod
@@ -202,8 +203,8 @@ class readAndConvert:
            
        return np.argsort(input_array)
    
-    def invert_sorter(input_array):
-        index_tracker = np.zeros((np.max(input_array) + 1,))
+    def invert_sorter(input_array, length):
+        index_tracker = np.zeros(length) - 1
         index_tracker[input_array] = np.arange(0, input_array.size)    
            
         return np.array(index_tracker).astype(int)  
@@ -252,6 +253,7 @@ class readAndConvert:
         
         n_shell = 0
         nip_shell = 2
+        allowable_part_strings = ["_rigid_wall_",  ": RIGIDWALL_"]
         if rr.raw_header["nbFacets"] > 0:
              
             shell_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]))
@@ -261,8 +263,7 @@ class readAndConvert:
                 # Masking can remove useful entities such as rigid walls
                 # This will search a text array to match a string and return the boolean array to indicate should be shown
                 # Changing True to False will generate the inverse array
-                part_strings = ["_rigid_wall_",  ": RIGIDWALL_"]
-                display_shell = readAndConvert.generate_display_entity(readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker), rr.raw_arrays["pTextA"], part_strings, True) 
+                display_shell = readAndConvert.generate_display_entity(readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker), rr.raw_arrays["pTextA"], allowable_part_strings, True) 
 
                 # The shell mask function filters out any entity that has a id of zero
                 # In order to keep entities from the bool array we employ a trick below
@@ -274,17 +275,13 @@ class readAndConvert:
                 shell_mask = readAndConvert.generate_mask_map(readAndConvert.apply_sorter(rr.arrays["element_shell_ids"], shell_ids_tracker) + dummy_id_offset)
     
             else:
-                shell_mask = readAndConvert.apply_sorter(np.arange(0, len(rr.arrays["element_shell_ids"])), shell_ids_tracker)              
+                shell_mask = np.arange(0, len(rr.arrays["element_shell_ids"]))
             
             
-            shell_ids_tracker       = shell_ids_tracker[shell_mask]
-            
-            element_shell_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)
-            
+            shell_ids_tracker       = shell_ids_tracker[shell_mask]            
+            element_shell_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_shell_ids"]), shell_ids_tracker)               
             n_shell = len(element_shell_ids_out)
             
-
-
         if rr.raw_header["nbElts1D"] > 0:                                         
             
             beam_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_beam_ids"]))
@@ -297,7 +294,7 @@ class readAndConvert:
                
         _                                                           = readAndConvert.sequential(rr.arrays["node_ids"])
         node_ids_tracker                                            = readAndConvert.generate_sorter(_)                
-        inverted_node_ids_tracker                                   = readAndConvert.invert_sorter(node_ids_tracker)
+        inverted_node_ids_tracker                                   = readAndConvert.invert_sorter(node_ids_tracker, len(node_ids_tracker))
         original_node_coordinates                                   = readAndConvert.apply_sorter(rr.arrays["node_coordinates"], node_ids_tracker)
         
         node_ids_out = readAndConvert.apply_sorter(_, node_ids_tracker)
@@ -307,12 +304,13 @@ class readAndConvert:
         "Parts and geometry"
 
         # We need to order the PIDs in numerical order - we generate tracking functions to map indexes correctly 
+        
         if rr.raw_header["nbFacets"] > 0:
             
             shell_part_ids                                              =  np.array(rr.raw_arrays["pTextA"]).astype("U9").astype(int)
             shell_part_names                                            =  np.char.strip(np.array(list(np.char.split(rr.raw_arrays["pTextA"], sep=":")))[:,1])
             shell_part_num                                              = len(shell_part_ids)
-        
+
         else:
             shell_part_ids                                              = []
             shell_part_names                                            = []
@@ -358,16 +356,19 @@ class readAndConvert:
             beam_part_ids                                       =   []
             beam_part_names                                     =   []
             beam_part_num                                       =   0              
-                      
+                              
 # Generate Part trackers
-        # All part ids
+
+        # Gather all part ids
         _                                                           = np.concatenate([shell_part_ids, beam_part_ids, solid_part_ids])
-        # All part names 
+
+        # Gather all part names 
         __                                                          = np.concatenate([shell_part_names, beam_part_names, solid_part_names])        
         # Set all parts with invalid names' PIDS to zero
-        invalid_name_strings = ["_rigid_wall_",  ": RIGIDWALL_"]
+        
         ____ = np.array([])
-        for search_str in invalid_name_strings:       
+        # Allowable part strings was defined under shell mask. As these parts have a PID of 0 we need to generate new PIDs.
+        for search_str in allowable_part_strings:       
             ___ = np.flatnonzero(np.core.defchararray.find(__,search_str)!=-1)
             _[___] = 0
             ____ = np.concatenate([____,___]).astype(int)
@@ -378,19 +379,45 @@ class readAndConvert:
         available_pids = list(possible_pids.difference(currently_valid_pids))
         available_pids.sort()
         # Assign and update the new PIDS
-        #print(available_pids)
-        #print(____)
         _[____] = available_pids[:len(____)]
         
-        n_parts                                                     = len(_)
-        part_ids_tracker                                            = readAndConvert.generate_sorter(_)
-        inverted_part_ids_tracker                                   = readAndConvert.invert_sorter(part_ids_tracker)
         
+        # We now generate the first part sorter for this array
+        n_parts                                                     = len(_)
+        _part_ids_tracker                                            = readAndConvert.generate_sorter(_)
+        
+        # We need to check if any parts are empty and remove them from the d3plot
+        sum_elements_by_part = np.zeros(len(_))
+        if rr.raw_header["nbFacets"] > 0:
+            _____   = readAndConvert.apply_sorter(rr.arrays["element_shell_part_indexes"], shell_ids_tracker)
+            sum_elements_by_part = sum_elements_by_part + np.bincount(_____, np.ones(len(_____)), minlength = len(sum_elements_by_part)) 
+        if rr.raw_header["nbElts1D"] > 0:
+            _____   = readAndConvert.apply_sorter(element_beam_part_indexes, beam_ids_tracker).astype(int) + shell_part_num 
+            sum_elements_by_part = sum_elements_by_part + np.bincount(_____, np.ones(len(_____)), minlength = len(sum_elements_by_part))             
+        if rr.raw_header["nbElts3D"] > 0:
+            _____   = readAndConvert.apply_sorter(rr.arrays["element_solid_part_indexes"], solid_ids_tracker) + shell_part_num + beam_part_num           
+            sum_elements_by_part = sum_elements_by_part + np.bincount(_____, np.ones(len(_____)), minlength = len(sum_elements_by_part))      
+        sum_elements_by_part = readAndConvert.apply_sorter(sum_elements_by_part, _part_ids_tracker).astype(int)
+        
+        # Any parts that have zero elements are removed
+        # Generate the empty part tracker
+        
+        empty_part_tracker = np.array(np.arange(0,len(sum_elements_by_part)))[sum_elements_by_part.astype(bool)]
+
+        invert_part_tracker = np.zeros(len(sum_elements_by_part))-1
+        invert_part_tracker[empty_part_tracker] = empty_part_tracker
+        
+        # Update the part_ids_tracker to remove empty parts from all part arrays
+        part_ids_tracker = _part_ids_tracker[empty_part_tracker]
+
+        # Generate the inverse to map the element part index arrays to the new indexing
+        inverted_part_ids_tracker                                   = readAndConvert.invert_sorter(part_ids_tracker, len(_))
+        
+        
+# Generate the main part arrays, titles, ids indexing etc
+
         # Part arrays these all need defining
         self._d3plot.arrays[ArrayType.part_ids]                     = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int)
-        #self._d3plot.arrays[ArrayType.part_ids_unordered]           = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int) 
-        
-        #self._d3plot.arrays[ArrayType.part_ids]                     = np.arange(1, len(_)+1)
         # These are not IDS, this is a FORTRAN INDEX System
         self._d3plot.arrays[ArrayType.part_ids_unordered]           = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int) 
         
@@ -410,6 +437,8 @@ class readAndConvert:
         self._d3plot.arrays[ArrayType.part_titles_ids]              = readAndConvert.apply_sorter(_, part_ids_tracker).astype(int)
         # Not an ID this is an index in Fortran starting at 1
         self._d3plot.arrays[ArrayType.part_ids_cross_references]    = np.arange(1,len(_) +1).astype("int64")
+        
+
         
         if rr.raw_header["nbFacets"] > 0:
             # Assign the shell part indexes
@@ -575,7 +604,7 @@ class readAndConvert:
                     _["convert"]        = convert.element_shell_effective_plastic_strain
                     _["tracker"]        = shell_ids_tracker  
                     _["additional"]     = [nip_shell]
-                    
+                   
                 flag = "PARTS"
                 
                 database_extent_binary[flag] = {}      
@@ -590,7 +619,8 @@ class readAndConvert:
                     array_requirements[ArrayType.part_mass] = {}
                     _ = array_requirements[ArrayType.part_mass]
                     
-                    _["dependents"]     = ["node_coordinates","element_shell_node_indexes","element_shell_thickness","element_shell_density","element_shell_part_indexes"]
+                    _["dependents"]     = ["node_coordinates","element_shell_node_indexes","element_shell_thickness",\
+                                           "element_shell_density","element_shell_part_indexes", "element_shell_is_alive"]
                     _["shape"]          = (1, n_parts)
                     _["convert"]        = convert.part_shell_mass
                     _["tracker"]        = part_ids_tracker     
@@ -649,7 +679,7 @@ class readAndConvert:
                                         self._d3plot.arrays[array_output] = np.array(___[np.newaxis, :]).astype("<f")
                             else:
                                 self._d3plot.arrays[array_output] = np.zeros(shape=(array_requirements[array_output]["shape"])).astype("<f")
-                                                                            
+                                                                              
             "Write out the d3plot state"
                                         
             random_name = readAndConvert.generate_random_name(10, ifile)
@@ -672,9 +702,8 @@ class readAndConvert:
             
             self._d3plot.header.itype = np.int64
             self._d3plot.header.ftype = np.float64
-            self._d3plot.header.wordsize = 8
+            self._d3plot.header.wordsize = 8      
 
-            
             self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
             
             "Rename new files and remove temp files"
@@ -691,11 +720,8 @@ class readAndConvert:
         
 if __name__ == '__main__':   
              
-    #file_stem = "C:/Users/PC/Downloads/test/DynaOpt"    
-    #file_stem = "P:/Optimisation/A001a/Baseline/FFB_0/DynaOpt"
-    file_stem = "C:/Users/PC/Downloads/test3/DynaOpt"
-    #file_stem = "C:/Users/PC/Downloads/test4/CRA2AV4"
-    
-    a2d = readAndConvert(file_stem, use_shell_mask=True)
+    file_stem = "C:/Users/PC/Downloads/roofc/DynaOpt"
+
+    a2d = readAndConvert(file_stem, use_shell_mask=False, silent=False)
     
       

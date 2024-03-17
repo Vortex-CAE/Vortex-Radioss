@@ -8,8 +8,8 @@ from typing import Union
 import numpy as np
 import rich
 
-from vortex_radioss.lasso.io.binary_buffer import BinaryBuffer
-from vortex_radioss.lasso.logging import get_logger
+from lasso.io.binary_buffer import BinaryBuffer
+from lasso.logging import get_logger
 
 from .RadiossReader import RadiossReader
 
@@ -240,7 +240,6 @@ class RadiossTHReader:
             __, position                                    = self.read_single_word(bb, self.itype, position)            
         #-------PART DESCRIPTION------------*/
         nvar_part                                       = []
-        th_part_names                                   = []
         nvar_part_tot                                   = 0
         self.raw_header["case_names"]                   = {}
         self.raw_header["part_names"]                   = {}
@@ -272,7 +271,7 @@ class RadiossTHReader:
                 except:
                     case_names.append("empty")
             self.raw_header["case_names"]\
-                ["part"][part_name]                     = case_names                        
+                ["part"][i]                         = case_names                        
         self.raw_header["part_names"]               = part_names 
         
         #/*-------MATER DESCRIPTION------------*/
@@ -329,7 +328,7 @@ class RadiossTHReader:
                             __, position                                    = self.read_single_word(bb, self.itype, position)                                
                         nvar_subs                                       += 1
                         case_names.append(case.get(case_flag, "empty"))
-                    self.raw_header["case_names"]["sub"][sub_name]  = case_names  
+                    self.raw_header["case_names"]["sub"][i]         = case_names  
                     self.raw_header["sub_names"]                    = sub_names                        
         # TH
         nbelem_thgrp                                = []
@@ -349,30 +348,13 @@ class RadiossTHReader:
                 nvar, position                              = self.read_single_word(bb, self.itype, position)
                 nvar_thgrp.append(nvar)
                 _nthgrp2, position                          = self.read_single_word(bb,[str, titlelength], position)
-                nthgrp2_name                                = _nthgrp2.strip()   
-                
-                # Check for duplicate names and up-index array name
-                incremental_index = 2
-                _ = nthgrp2_name   
-                while True:
-                    if nthgrp2_name not in name_set:
-                        name_set.add(nthgrp2_name)
-                        break
-                    else:
-                        if _ + str(_) + str(incremental_index) not in name_set:
-                            nthgrp2_name = _ + str("_") + str(incremental_index)
-                            name_set.add(nthgrp2_name)
-                            break
-                        else:
-                            incremental_index += 1
-                # End of duplicate name check
-                
-                self.raw_header["case_names"]["nthgrp2"]\
-                    [nthgrp2_name]                          = {}
+                nthgrp2_name                                = _nthgrp2.strip()                   
+                self.raw_header["case_names"]["nthgrp2"][i] = {}
                 nthgrp2_names.append(nthgrp2_name)  
                 __, position                                = self.read_single_word(bb, self.itype, position)
                 
                 _names=[]
+                
                 for j in range(0, nbelem):
                     
                     __, position                                = self.read_single_word(bb, self.itype, position)
@@ -381,14 +363,15 @@ class RadiossTHReader:
                     _names.append([_id, _name, nvar])
                     
                     __, position        = self.read_single_word(bb, self.itype, position)
-                self.raw_header["case_names"]["nthgrp2"]\
-                                            [nthgrp2_name]  = _names
+                    
+                self.raw_header["case_names"]["nthgrp2"][i]  = _names
                 for j in range(0, nvar):    
                         if j == 0:
                             __, position        = self.read_single_word(bb, self.itype, position)
                         __, position         = self.read_single_word(bb, self.itype, position)
                         if j == nvar -1:
-                            __, position        = self.read_single_word(bb, self.itype, position)                    
+                            __, position        = self.read_single_word(bb, self.itype, position)     
+
         # Calculate the number of timesteps by calculating the width of a timestep and the remaining filesize
         
         # Get the width
@@ -452,9 +435,10 @@ class RadiossTHReader:
             if nvar_part_tot                                                > 0:
                 __, position                                                    = self.slicer(position, 1, self.ftype)
             self.array["part"]                                              = {}
-            for part_name in self.raw_header["part_names"]:
-                self.array["part"][part_name]                                              = {}
-                case_names = self.raw_header["case_names"]["part"][part_name]
+            for i, part_name in enumerate(self.raw_header["part_names"]):
+                if part_name not in self.array["part"]:
+                    self.array["part"][part_name]                                              = {}
+                case_names = self.raw_header["case_names"]["part"][i]
                 for case_name in case_names:
                     self.array["part"][part_name][case_name], position              = self.slicer(position, 1, self.ftype)
             __, position                                                    = self.slicer(position, 1, self.ftype)
@@ -462,28 +446,30 @@ class RadiossTHReader:
         if nvar_subs                                                    > 0:
             __, position                                                    = self.slicer(position, 1, self.ftype)
             self.array["subs"]                                              = {}
-            for sub_name in sub_names:
-                self.array["subs"][sub_name]                                    = {}
-                case_names = self.raw_header["case_names"]["sub"][sub_name]
+            for i, sub_name in enumerate(sub_names):
+                if sub_name not in self.array["subs"]:
+                    self.array["subs"][sub_name]                                    = {}
+                case_names = self.raw_header["case_names"]["sub"][i]
                 for case_name in case_names:
                     self.array["subs"][sub_name][case_name], position               = self.slicer(position, 1, self.ftype)
             __, position                                                    = self.slicer(position, 1, self.ftype)
         
-        
         # Build the TH dict
+
         self.array["group"]                                                     = {}
-        for nthgrp2_name in nthgrp2_names:
+        for i, nthgrp2_name in enumerate(nthgrp2_names):
             __, position                                                    = self.slicer(position, 1, self.ftype)
             name                                                                    = nthgrp2_name.strip().lower()
-            self.array["group"][name]                                               = {}
-            for TH in self.raw_header["case_names"]["nthgrp2"][nthgrp2_name]:
+            if name not in self.array["group"]:
+                self.array["group"][name]                                               = {}
+            for TH in self.raw_header["case_names"]["nthgrp2"][i]:
                 self.array["group"][name][TH[0]]                                        = {}
                 self.array["group"][name][TH[0]]\
                     ["name"]                                                            = TH[1].strip().lower()
                 self.array["group"][name][TH[0]]\
                     ["time_history"], position                                          = self.slicer(position, TH[2], self.ftype)
             __, position                                                    = self.slicer(position, 1, self.ftype)
-                        
+        
         return self
     
     def read_words(self,
