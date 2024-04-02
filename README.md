@@ -26,7 +26,10 @@ Alternatively the library can be found here: https://github.com/open-lasso-pytho
 
 Modules
 ------------
-<img align="right" width="250" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
+
+<picture>
+    <img align="right" width="250" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
+</picture>
 
 ### Radioss Animation Reader
 This module will read in the animation data from one Radioss Animation file (One timestep), as the raw arrays are compressed and difficult to use, we reccommend using the unpacked arrays as described below. 
@@ -44,14 +47,16 @@ This module will read in the animation data from one Radioss Animation file (One
     # Print header dictionary keys
     print(rr.raw_header.keys())
 
-    ### To display the arrays as they come out of Radioss (Not reccomended)
+    ### To display the arrays as they come out of Radioss
+    (Not reccomended)
     # Return raw arrays dictionary
     rr.raw_arrays
     
     # Print raw arrays dictionary keys
     print(rr.raw_arrays.keys())
 
-    ### To display the arrays once they are unpacked (Reccomended)
+    ### To display the arrays once they are unpacked
+    (Reccomended)
     # Return unpacked dictionary arrays
     rr.arrays
     
