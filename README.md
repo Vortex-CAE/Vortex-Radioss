@@ -26,7 +26,7 @@ Alternatively the library can be found here: https://github.com/open-lasso-pytho
 
 Modules
 ------------
-<img align="right" height="500" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
+<img align="right" height="700" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy.png" alt="Dummy">
 
 ### Radioss Animation Reader
 This module will read in the animation data from one Radioss Animation file (One timestep), as the raw arrays are compressed and difficult to use, we reccommend using the unpacked arrays as described below. 
