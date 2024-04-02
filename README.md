@@ -28,7 +28,7 @@ Modules
 ------------
 
 <picture>
-    <img align="right" width="250" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy3.png" alt="Dummy">
+    <img align="right" width="200" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy3.png" alt="Dummy">
 </picture>
 
 ### Radioss Animation Reader
@@ -47,16 +47,14 @@ This module will read in the animation data from one Radioss Animation file (One
     # Print header dictionary keys
     print(rr.raw_header.keys())
 
-    ### To display the arrays as they come out of Radioss
-    (Not reccomended)
+    ### To display the arrays as they come out of Radioss (Not reccomended)
     # Return raw arrays dictionary
     rr.raw_arrays
     
     # Print raw arrays dictionary keys
     print(rr.raw_arrays.keys())
 
-    ### To display the arrays once they are unpacked
-    (Reccomended)
+    ### To display the arrays once they are unpacked (Reccomended)
     # Return unpacked dictionary arrays
     rr.arrays
     
