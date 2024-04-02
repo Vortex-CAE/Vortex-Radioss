@@ -47,14 +47,14 @@ This module will read in the animation data from one Radioss Animation file (One
     # Print header dictionary keys
     print(rr.raw_header.keys())
 
-    ### To display the arrays as they come out of Radioss (Not reccomended)
+    ### To display the arrays as they come out of Radioss
     # Return raw arrays dictionary
     rr.raw_arrays
     
     # Print raw arrays dictionary keys
     print(rr.raw_arrays.keys())
 
-    ### To display the arrays once they are unpacked (Reccomended)
+    ### To display the arrays once they are unpacked
     # Return unpacked dictionary arrays
     rr.arrays
     
