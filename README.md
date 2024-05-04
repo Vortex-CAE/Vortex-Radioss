@@ -28,7 +28,7 @@ Modules
 ------------
 
 <picture>
-    <img align="right" width="40%" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy3.png" alt="Dummy">
+    <img align="right" width="30%" src="https://github.com/Vortex-CAE/Vortex-Radioss/blob/main/docs/Dummy3.png" alt="Dummy">
 </picture>
 
 ### Radioss Animation Reader
