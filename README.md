@@ -87,13 +87,13 @@ This module will read in the data from one Radioss Time-History file (Multiple t
 ### Radioss Animation to LS-Dyna D3Plot
 This module will convert Radioss Animation Files to LS-Dyna's D3plot format. The Radioss Time-History files will also be required as they contain data required by D3plot that is not present in the Animation files. This conversion is not comprehensive and is limited to only some common scalar and tensor arrays.
 
-       # Load the module
-      from vortex_radioss.animtod3plot.Anim_to_D3plot import readAndConvert
-      
-      # Use the file stem e.g for "folder/fileA001", "folder/fileA002" would be:
-      readAndConvert(file_stem)
-      
-      # The D3plots files "file_stem.d3plot*" will be generated
+     # Load the module
+    from vortex_radioss.animtod3plot.Anim_to_D3plot import readAndConvert
+    
+    # Use the file stem e.g for "folder/fileA001", "folder/fileA002" would be:
+    readAndConvert(file_stem)
+    
+    # The D3plots files "file_stem.d3plot*" will be generated
 
 CONTACT
 ------------
