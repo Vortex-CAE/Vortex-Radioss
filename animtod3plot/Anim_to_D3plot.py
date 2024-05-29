@@ -4,7 +4,8 @@
 
 from lasso.dyna.d3plot import D3plot
 from lasso.dyna.array_type import ArrayType
-import RadiossReader
+
+from vortex_radioss.animtod3plot.RadiossReader import RadiossReader
 
 import numpy as np
 import os
