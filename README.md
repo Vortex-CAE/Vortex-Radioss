@@ -94,7 +94,7 @@ This module will convert Radioss Animation Files to LS-Dyna's D3plot format. The
     
     readAndConvert(folder/file)
     
-    # The D3plots files "file_stem.d3plot*" will be generated
+    # The D3plots files "folder/file.d3plot*" will be generated
 
 CONTACT
 ------------
