@@ -91,7 +91,8 @@ This module will convert Radioss Animation Files to LS-Dyna's D3plot format. The
     from vortex_radioss.animtod3plot.Anim_to_D3plot import readAndConvert
     
     # Use the file stem e.g for "folder/fileA001", "folder/fileA002" would be:
-    readAndConvert(file_stem)
+    
+    readAndConvert(folder/file)
     
     # The D3plots files "file_stem.d3plot*" will be generated
 
