@@ -12,6 +12,7 @@ import os
 import time
 from tqdm import tqdm
 import glob
+import re
 
 class convert:
     @staticmethod
@@ -226,6 +227,10 @@ class readAndConvert:
         if not silent:
             print(string)
     
+    @staticmethod
+    def natural_sort_key(s):
+        # Function to sort strings in human order (so file_stemA101 comes before file_stemA1000)
+        return [int(text) if text.isdigit() else text.lower() for text in re.split('(\\d+)', s)]
 
     def A_2_D(self,file_stem, use_shell_mask, use_solid_mask, use_beam_mask, silent):
     
@@ -243,7 +248,7 @@ class readAndConvert:
             print("No files found..\nPlease check file stem:\ne.g\nC:/Folder/ModelA00*\nWould be:\nC:/Folder/Model*")
             return
         else:
-            rr = RadiossReader.RadiossReader(file_list[0])  
+            rr = RadiossReader(file_list[0])  
         
         #rr.raw_header["nbElts1D"] = 0
         
@@ -466,7 +471,7 @@ class readAndConvert:
         for ifile, file in enumerate(tqdm(file_list, disable = silent)):            
             
             if ifile:
-                rr = RadiossReader.RadiossReader(file) 
+                rr = RadiossReader(file) 
                 #rr.raw_header["nbElts1D"] = 0
                 
             
