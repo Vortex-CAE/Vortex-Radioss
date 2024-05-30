@@ -238,7 +238,7 @@ class readAndConvert:
             return True
 
         file_list = glob.glob(file_stem + "A*[0-9]")
-        file_list.sort()
+        file_list.sort(key=self.natural_sort_key)
         
         original_node_coordinates       = None
                        
