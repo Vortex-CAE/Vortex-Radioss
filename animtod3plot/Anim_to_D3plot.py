@@ -34,32 +34,100 @@ class convert:
     def part_kinetic_energy(*data):
         # conversion logic for part_kinetic_energy
         return data
-
+    
     @staticmethod
-    def part_shell_mass(*data):
+    def part_mass(*data):
         
-        # conversion logic for part_internal_energy
+        rr_arrays           = data[1][0]
+        n_parts             = data[1][1]  
+        n_shell_parts       = data[1][2]
+        n_beam_parts        = data[1][3]
         
-        node_coordinates    = data[0]
-        shell_node_indexes  = data[1]
-        shell_thicknesses   = data[2]
-        shell_densities     = data[3]     
-        shell_part_indexes  = data[4]
-        shell_is_alive      = data[5]
-        n_parts             = data[6][0]
+        out                   = np.zeros(n_parts) 
         
-        n1      = node_coordinates[shell_node_indexes][:,0]
-        n2      = node_coordinates[shell_node_indexes][:,1]
-        n3      = node_coordinates[shell_node_indexes][:,2]
-        n4      = node_coordinates[shell_node_indexes][:,3]      
-        ux      = n1[:,0] - n3[:,0]; uy = n1[:,1] - n3[:,1]; uz = n1[:,2] - n3[:,2]
-        vx      = n4[:,0] - n2[:,0]; vy = n4[:,1] - n2[:,1]; vz = n4[:,2] - n2[:,2]        
-        i       = uy*vz - uz*vy; j = uz*vx - ux*vz; k = ux*vy - uy*vx;
-        area    = np.sqrt((i*i)+(j*j)+(k*k))*0.5
-        mass    = area * shell_thicknesses * shell_densities * shell_is_alive                     
-        _       = np.bincount(shell_part_indexes, mass, minlength = n_parts)        
-             
-        return _
+        # conversion logic for part_shell_masses
+        shell_dependencies = ["element_shell_node_indexes","element_shell_thickness", \
+                              "element_shell_density","element_shell_part_indexes", \
+                              "element_shell_is_alive"]
+        
+        process_shell_parts = True
+        for i in shell_dependencies:
+            if i not in rr_arrays:
+                process_shell_parts = False
+                break
+        if process_shell_parts:
+            node_coordinates    = data[0]
+            shell_node_indexes  = rr_arrays["element_shell_node_indexes"]
+            shell_thicknesses   = rr_arrays["element_shell_thickness"]
+            shell_densities     = rr_arrays["element_shell_density"]     
+            shell_part_indexes  = rr_arrays["element_shell_part_indexes"]
+            shell_is_alive      = rr_arrays["element_shell_is_alive"]
+            
+            n1      = node_coordinates[shell_node_indexes][:,0]
+            n2      = node_coordinates[shell_node_indexes][:,1]
+            n3      = node_coordinates[shell_node_indexes][:,2]
+            n4      = node_coordinates[shell_node_indexes][:,3]      
+            ux      = n1[:,0] - n3[:,0]; uy = n1[:,1] - n3[:,1]; uz = n1[:,2] - n3[:,2]
+            vx      = n4[:,0] - n2[:,0]; vy = n4[:,1] - n2[:,1]; vz = n4[:,2] - n2[:,2]        
+            i       = uy*vz - uz*vy; j = uz*vx - ux*vz; k = ux*vy - uy*vx;
+            area    = np.sqrt((i*i)+(j*j)+(k*k))*0.5
+            mass    = area * shell_thicknesses * shell_densities * shell_is_alive              
+            
+            out    += np.bincount(shell_part_indexes, mass, minlength = n_parts)       
+            
+        # conversion logic for part_solid_masses
+        solid_dependencies = ["element_solid_node_indexes", \
+                              "element_solid_part_indexes", \
+                              "element_solid_is_alive",\
+                              "element_solid_density"]
+        
+        process_solid_parts = True
+        for i in solid_dependencies:
+            if i not in rr_arrays:
+                process_solid_parts = False
+                break
+        if process_solid_parts:
+            node_coordinates    = data[0]
+            solid_node_indexes  = rr_arrays["element_solid_node_indexes"]
+            solid_densities     = rr_arrays["element_solid_density"]     
+            solid_part_indexes  = rr_arrays["element_solid_part_indexes"]
+            solid_is_alive      = rr_arrays["element_solid_is_alive"]
+            
+            vertices = node_coordinates[solid_node_indexes]
+            
+            # Indices of vertices forming the 5 tetrahedra
+            tetrahedra_indices = np.array([
+                [0, 1, 3, 4],
+                [1, 2, 3, 6],
+                [1, 6, 4, 5],
+                [3, 4, 6, 7],
+                [1, 3, 4, 6]])
+        
+            # Extract vertices of the tetrahedra for all hexahedral elements
+            tetrahedra_vertices = vertices[:, tetrahedra_indices]
+        
+            # Calculate vectors relative to the first vertex of each tetrahedron
+            v0 = tetrahedra_vertices[:, :, 0]
+            v1 = tetrahedra_vertices[:, :, 1] - v0
+            v2 = tetrahedra_vertices[:, :, 2] - v0
+            v3 = tetrahedra_vertices[:, :, 3] - v0
+        
+            # Calculate the determinants of the matrices formed by v1, v2, and v3 for each tetrahedron
+            determinants = np.linalg.det(np.stack((v1, v2, v3), axis=-1))
+        
+            # Calculate the volume of each tetrahedron
+            tetra_volumes = np.abs(determinants) / 6.0
+        
+            # Sum the volumes of the tetrahedra to get the total volume for each hexahedral element
+            volume = np.sum(tetra_volumes, axis=1)
+            
+            mass    = volume * solid_is_alive * solid_densities
+                
+            out       += np.bincount(solid_part_indexes\
+                                   + n_shell_parts
+                                   + n_beam_parts                                   
+                                   , mass, minlength = n_parts)          
+        return out    
 
     @staticmethod
     def rigid_body_velocity(*data):
@@ -72,8 +140,7 @@ class convert:
         half_size = len(data) // 2
         data1 = data[:half_size]
         data2 = data[half_size:]
-        print(data1)
-        print(data2)
+
         return sum(data1) + sum(data2)
     
     @staticmethod
@@ -93,7 +160,7 @@ class convert:
         # Mid-surface stresses if present are not converted
         # Only Upper and Lower stresses are converted 
         # Out of plane stresses not converted
-        # Co-ordinate systems not corrected for - should be OK for Von-Mises, Tresca etc and \
+        # Global coordinate system is used
         # stress principles
         # [σx, σy, σz, σxy, σyz, σxz]
         
@@ -115,6 +182,27 @@ class convert:
         return out
     
     @staticmethod
+    def element_solid_stress(*data):
+        
+        # Global coordinate system is used
+        # stress principles
+        # [σx, σy, σz, σxy, σyz, σxz]
+
+        solid_num      = len(data[0])        
+        
+        out            = np.zeros(shape=(solid_num, 1, 6))              
+        
+        out[:, 0, 0]   = data[0][:, 0]
+        out[:, 0, 1]   = data[0][:, 1]
+        out[:, 0, 2]   = data[0][:, 2]
+            
+        out[:, 0, 3]   = data[0][:, 3]
+        out[:, 0, 4]   = data[0][:, 4]
+        out[:, 0, 5]   = data[0][:, 5]
+        
+        return out    
+    
+    @staticmethod
     def element_shell_effective_plastic_strain(*data):
         
         # Mid-surface stresses if present are not converted
@@ -133,6 +221,18 @@ class convert:
         out[:, 0]    = data[1]
         
         return out    
+    
+    @staticmethod
+    def element_solid_effective_plastic_strain(*data):
+                
+        solid_num      = len(data[0])        
+
+        out            = np.zeros(shape=(solid_num, 1))
+            
+        # Top integration point
+        out[:, 0]   = data[0]
+
+        return out     
                 
 class readAndConvert:
     
@@ -142,7 +242,8 @@ class readAndConvert:
         use_shell_mask=True,
         use_solid_mask=False,
         use_beam_mask=False,
-        silent=False
+        silent=False,
+        I4R4=False
     ):
         """Constructor for a readAndConvert
 
@@ -159,7 +260,7 @@ class readAndConvert:
 
         self._start=time.time()
         self._d3plot = D3plot()
-        self.A_2_D(filepath, use_shell_mask, use_solid_mask, use_beam_mask, silent)
+        self.A_2_D(filepath, use_shell_mask, use_solid_mask, use_beam_mask, silent, I4R4)
 
     def sequential(input_array):
         
@@ -232,7 +333,7 @@ class readAndConvert:
         # Function to sort strings in human order (so file_stemA101 comes before file_stemA1000)
         return [int(text) if text.isdigit() else text.lower() for text in re.split('(\\d+)', s)]
 
-    def A_2_D(self,file_stem, use_shell_mask, use_solid_mask, use_beam_mask, silent):
+    def A_2_D(self,file_stem, use_shell_mask, use_solid_mask, use_beam_mask, silent, I4R4):
     
         if os.path.isfile(file_stem + "d3plot"):
             return True
@@ -297,6 +398,8 @@ class readAndConvert:
             
             solid_ids_tracker = readAndConvert.generate_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]))
             element_solid_ids_out   =   readAndConvert.apply_sorter(readAndConvert.sequential(rr.arrays["element_solid_ids"]), solid_ids_tracker)
+        
+        n_solid = rr.raw_header["nbElts3D"]
                
         _                                                           = readAndConvert.sequential(rr.arrays["node_ids"])
         node_ids_tracker                                            = readAndConvert.generate_sorter(_)                
@@ -610,28 +713,75 @@ class readAndConvert:
                     _["convert"]        = convert.element_shell_effective_plastic_strain
                     _["tracker"]        = shell_ids_tracker  
                     _["additional"]     = [nip_shell]
+                                        
+                if rr.raw_header["nbEFunc3D"] > 0:   
+                    
+                    flag = "SOLIDS"
+                    
+                    database_extent_binary[flag] = {}      
+                    _ = database_extent_binary[flag]
+                    
+                    # [0] are essential arrays and need creating even if no data available
+                    
+                    database_extent_binary[flag][0] = []
+                    database_extent_binary[flag][0] = _[0] + [ArrayType.element_solid_is_alive]  
+                    database_extent_binary[flag][0] = _[0] + [ArrayType.element_solid_stress]    
+                    database_extent_binary[flag][0] = _[0] + [ArrayType.element_solid_effective_plastic_strain]
+                                        
+                    # Dyna output
+                    array_requirements[ArrayType.element_solid_is_alive] = {}
+                    _ = array_requirements[ArrayType.element_solid_is_alive]
+                    # Radioss outputs needed to compute Dyna output
+                    _["dependents"]     = ["element_solid_is_alive"]
+                    _["shape"]          = (1,n_solid)
+                    _["convert"]        = None
+                    _["tracker"]        = solid_ids_tracker
+                    _["additional"]     = []
+                                        
+                   # Dyna output
+                    array_requirements[ArrayType.element_solid_stress] = {}
+                    _ = array_requirements[ArrayType.element_solid_stress]
+                    # Radioss outputs needed to comptute Dyna output
+                    _["dependents"]     = ["element_solid_stress"]
+                    _["shape"]          = (1,n_solid, 1, 6)
+                    _["convert"]        = convert.element_solid_stress
+                    _["tracker"]        = solid_ids_tracker
+                    _["additional"]     = []
+                    
+                   # Dyna output
+                    array_requirements[ArrayType.element_solid_effective_plastic_strain] = {}
+                    _ = array_requirements[ArrayType.element_solid_effective_plastic_strain]
+                    # Radioss outputs needed to comptute Dyna output
+                    _["dependents"]     = ["element_solid_plastic_strain"]
+                    _["shape"]          = (1, n_solid, 1)
+                    _["convert"]        = convert.element_solid_effective_plastic_strain
+                    _["tracker"]        = solid_ids_tracker  
+                    _["additional"]     = []                                           
+                    
                    
                 flag = "PARTS"
                 
                 database_extent_binary[flag] = {}      
                 _ = database_extent_binary[flag]
                 
-                # Part masses for shells      
-                if rr.raw_header["nbEFunc"] > 0: 
-                    
-                    database_extent_binary[flag][0] = []
-                    database_extent_binary[flag][0] = _[0] + [ArrayType.part_mass]   
-                    
-                    array_requirements[ArrayType.part_mass] = {}
-                    _ = array_requirements[ArrayType.part_mass]
-                    
-                    _["dependents"]     = ["node_coordinates","element_shell_node_indexes","element_shell_thickness",\
-                                           "element_shell_density","element_shell_part_indexes", "element_shell_is_alive"]
-                    _["shape"]          = (1, n_parts)
-                    _["convert"]        = convert.part_shell_mass
-                    _["tracker"]        = part_ids_tracker     
-                    _["additional"]     = [n_parts]
-                    
+                # Part masses                       
+                database_extent_binary[flag][0] = []
+                database_extent_binary[flag][0] = _[0] + [ArrayType.part_mass]   
+                
+                array_requirements[ArrayType.part_mass] = {}
+                _ = array_requirements[ArrayType.part_mass]
+                
+                # Dependency checks been moved to inside conversion function 
+                # This was done to allow processing of shells, beams and solid parts 
+                # even if other part types lack dependencies.
+                
+                _["dependents"]     = ["node_coordinates"]
+                _["shape"]          = (1, n_parts)
+                _["convert"]        = convert.part_mass
+                _["tracker"]        = part_ids_tracker     
+                _["additional"]     = [rr.arrays, n_parts, shell_part_num, beam_part_num]
+                                    
+            
             "Assign the arrays to the D3PLOT class for writing"
                         
             "Generate the availability check"
@@ -704,12 +854,17 @@ class readAndConvert:
                     os.remove(_)
             _ = file_stem + ".d3plot" + str(d3plot_index).zfill(padding)
             if os.path.isfile(_):
-                os.remove(_)           
+                os.remove(_)                           
             
-            self._d3plot.header.itype = np.int64
-            self._d3plot.header.ftype = np.float64
-            self._d3plot.header.wordsize = 8      
-
+            if not I4R4:
+                self._d3plot.header.itype = np.int64
+                self._d3plot.header.ftype = np.float64
+                self._d3plot.header.wordsize = 8                      
+            else:
+                self._d3plot.header.itype = np.int32
+                self._d3plot.header.ftype = np.float32
+                self._d3plot.header.wordsize = 4
+                
             self._d3plot.write_d3plot(temp_d3plot_name, single_file = False)
             
             "Rename new files and remove temp files"
@@ -726,8 +881,8 @@ class readAndConvert:
         
 if __name__ == '__main__':   
              
-    file_stem = "C:/Users/PC/Downloads/roofc/DynaOpt"
+    file_stem = r"C:\Users\PC\Downloads\ANIM_FILES\Tensile1500mm_permin_noparam"
 
-    a2d = readAndConvert(file_stem, use_shell_mask=False, silent=False)
+    a2d = readAndConvert(file_stem, use_shell_mask=True, silent=False, I4R4=True)
     
       
