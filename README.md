@@ -12,15 +12,15 @@
 
 This library is an open-source Python CAE library that allows for the reading of Radioss Animation files, Radioss Time-History files and for the conversion of Radioss Animation files into LS-Dyna's D3plot format.
 
-There is now some additional documentation which I have created for both developers and users which can be found here:
+There is now some additional documentation which has been created for both developers and users, this can be found here:
 
 https://www.vortex-cae.com/vortex-radioss
 
-This contains some information on what quantities can be converted, the database requests required to do so etc, as well as some documentation on how the conversion code is structured.
+It contains some information on what quantities can be converted, the database requests required to do so etc, as well as some documentation on how the conversion code is structured.
 
 If you would like to be notified by email of any updates made to the conversion library (we plan on adding data conversion support for solids very soon) you can sign up to be notified by email at the bottom of the page.
 
-Thank you all for all the supportive and constructive feedback
+Thank you to the contributors for all the supportive and constructive feedback
 
 
 
