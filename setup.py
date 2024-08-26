@@ -18,7 +18,7 @@ def main():
         version='1.0',
         description='AnimToD3plot conversion package',
         license="Mozilla Public License Version 2.0",
-        packages=['animtod3plot'],
+        packages=['vortex_radioss.animtod3plot'],
         install_requires=get_requirements(),)
 
 
