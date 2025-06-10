@@ -107,14 +107,13 @@ class convert:
         Rt = np.transpose(R, axes=(0, 2, 1))
         S_global = np.matmul(np.matmul(R, S_local), Rt)
 
-        # Extract the components and set the out-of-plane components to zero
         result = np.stack([
             S_global[:, 0, 0],  # ox
             S_global[:, 1, 1],  # oy
-            np.zeros(n),        # oz = 0 (out-of-plane)
+            S_global[:, 2, 2],   # oz 
             S_global[:, 0, 1],  # oxy
-            np.zeros(n),         # oyz = 0 (out-of-plane)
-            np.zeros(n)          # oxz = 0 (out-of-plane)
+            S_global[:, 1, 2],   # oyz
+            S_global[:, 0, 2],   # oxz 
         ], axis=-1)
 
         return result
