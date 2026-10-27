@@ -198,7 +198,7 @@ class RadiossTHReader:
         __, position                                = self.read_single_word(bb, self.itype, position)
         # Determine width of strings
         if thicode                                  >= 4021:
-            titleLength                                 = 100
+            titlelength                                 = 100
         elif thicode                                >= 3041:
             titlelength                                 = 80
         else:
