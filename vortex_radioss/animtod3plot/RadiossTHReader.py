@@ -450,27 +450,27 @@ class RadiossTHReader:
         __, position                                                     = self.slicer(position, 1, self.ftype)
         # Part variables
         if npart_nthpart                                                > 0:
-            if nvar_part_tot                                                > 0:
+            if nvar_part_tot                                            > 0:
                 __, position                                                    = self.slicer(position, 1, self.ftype)
-            self.array["part"]                                              = {}
+            self.array["part"]                                                  = {}
             for i, part_name in enumerate(self.raw_header["part_names"]):
-                if part_name not in self.array["part"]:
-                    self.array["part"][part_name]                                              = {}
+                self.array["part"][part_name]                                   = {}
                 case_names = self.raw_header["case_names"]["part"][i]
                 for case_name in case_names:
-                    self.array["part"][part_name][case_name], position              = self.slicer(position, 1, self.ftype)
-            __, position                                                    = self.slicer(position, 1, self.ftype)
+                    self.array["part"][part_name][case_name], position          = self.slicer(position, 1, self.ftype)
+
+            if nvar_part_tot                                            > 0:
+                __, position                                                    = self.slicer(position, 1, self.ftype)
         # Build the subset dict      
         if nvar_subs                                                    > 0:
-            __, position                                                    = self.slicer(position, 1, self.ftype)
-            self.array["subs"]                                              = {}
+            __, position                                                        = self.slicer(position, 1, self.ftype)
+            self.array["subs"]                                                  = {}
             for i, sub_name in enumerate(sub_names):
-                if sub_name not in self.array["subs"]:
-                    self.array["subs"][sub_name]                                    = {}
+                self.array["subs"][sub_name]                                    = {}
                 case_names = self.raw_header["case_names"]["sub"][i]
                 for case_name in case_names:
-                    self.array["subs"][sub_name][case_name], position               = self.slicer(position, 1, self.ftype)
-            __, position                                                    = self.slicer(position, 1, self.ftype)
+                    self.array["subs"][sub_name][case_name], position           = self.slicer(position, 1, self.ftype)
+            __, position                                                        = self.slicer(position, 1, self.ftype)
         
         # Build the TH dict
 
